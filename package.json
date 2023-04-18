@@ -44,8 +44,18 @@
       }
     ],
     "configuration": {
-      "title": "OpenShift Sandbox Sign Up Wizard",
+      "title": "OpenShift Developer Sandbox",
       "properties": {
+        "redhat.sandbox.registration.api.url": {
+          "type": "string",
+          "default": "https://registration-service-toolchain-host-operator.apps.sandbox.x8i5.p1.openshiftapps.com",
+          "description": "OpenShift Developer Sandbox Registration API URL"
+        },
+        "redhat.sandbox.api.timeout": {
+          "type": "number",
+          "default": "100",
+          "description": "OpenShift Developer Sandbox Registration API URL timeout in seconds"
+        },
         "verification.phone.number": {
           "type": "string",
           "title": "Phone for account verification",
