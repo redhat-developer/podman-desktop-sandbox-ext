@@ -119,10 +119,10 @@ export async function requestVerificationCode(token: string, countryCode: string
             'phone_number': phoneNumber
         })
     });
-    const responseText = await verificationCodeRequestResponse.body;
+    const responseJson = JSON.parse(verificationCodeRequestResponse.body);
     return {
         ok: verificationCodeRequestResponse.ok,
-        json: (responseText ? JSON.parse(responseText) : {}) as SBResponseData
+        json: (responseJson ? responseJson : {}) as SBResponseData
     }
 }
 
