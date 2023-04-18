@@ -70,7 +70,7 @@
     "watch": "rollup --bundleConfigAsCjs --config rollup.config.js -w"
   },
   "dependencies": {
-    "@podman-desktop/api": "^0.13.0",
+    "@podman-desktop/api": "^0.14.1",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
