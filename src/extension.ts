@@ -45,7 +45,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
     initialize: async () : Promise<void> => {
            return;
     },
-    authenticationProviderId: 'redhat.autentication-provider'
+    // authenticationProviderId: 'redhat.autentication-provider'
   });
 
   provider.registerInstallation({
