@@ -1,7 +1,7 @@
 {
   "name": "redhat-sandbox",
   "displayName": "Red Hat OpenShift Sandbox",
-  "description": "Sign up and propvisioning for OpenShift Sandbox",
+  "description": "Sign up and provisioning for OpenShift Sandbox",
   "version": "0.0.1",
   "icon": "icon.png",
   "publisher": "dgolvoin",
