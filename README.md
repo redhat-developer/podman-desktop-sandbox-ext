@@ -1,6 +1,6 @@
 OpenShift Developer Sandbox integration for Podman Desktop
 
-# Installation
+# Nightly Build Installation
 
 Use 
 
