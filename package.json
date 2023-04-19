@@ -56,6 +56,18 @@
           "default": "100",
           "description": "OpenShift Developer Sandbox Registration API URL timeout in seconds"
         },
+        "redhat.sandbox.context.name": {
+          "type": "string",
+          "default": "",
+          "scope": "KubernetesProviderConnectionFactory",
+          "description": "OpenShift Developer Sandbox Context name"
+        },
+        "redhat.sandbox.login.command": {
+          "type": "string",
+          "default": "",
+          "scope": "KubernetesProviderConnectionFactory",
+          "description": "OpenShift Developer Sandbox login command from Developer Console"
+        },
         "verification.phone.number": {
           "type": "string",
           "title": "Phone for account verification",

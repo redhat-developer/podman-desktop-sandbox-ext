@@ -143,8 +143,8 @@ export async function getOauthServerInfo(apiEndpointUrl: string): Promise<OauthS
         method: 'GET',
         // timeout: getSandboxAPITimeout()
     });
-    const oauthInfoText = await oauthServerInfoResponse.body;
-    return (oauthInfoText ? JSON.parse(oauthInfoText) : {}) as OauthServerInfo;
+    const oauthInfoJson = JSON.parse(oauthServerInfoResponse.body);
+    return (oauthInfoJson ? oauthInfoJson : {}) as OauthServerInfo;
 }
 
 export function createSandboxAPI(): SandboxAPI {
