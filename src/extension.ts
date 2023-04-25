@@ -17,11 +17,32 @@
  ***********************************************************************/
 
 import * as extensionApi from '@podman-desktop/api';
-import * as k8s from '@kubernetes/client-node';
 import * as fs from 'fs-extra';
-import * as path from 'path';
-import got from 'got';
-import { findHomeDir } from '@kubernetes/client-node';
+import * as jsYaml from 'js-yaml';
+
+
+async function createOrLoadKubeConfig(kubeconfigFile = extensionApi.kubernetes.getKubeconfig().fsPath) {
+  let config:any = {
+    contexts: [],
+    users: [],
+    clusters: []
+  };
+
+  // Do not load from default locations if it is not present
+  // It will be added later if sandbox url and token provided
+  if (fs.existsSync(kubeconfigFile)) {
+    config = loadKubeconfig(kubeconfigFile);
+  }
+  return config;
+}
+
+async function loadKubeconfig(kubeconfigFile): Promise<{ [key: string]: any }> {
+  // load existing sandbox contexts form kubeconfig
+  const kubeConfigRawContent = await fs.promises.readFile(kubeconfigFile, 'utf-8');
+  // parse the content using jsYaml
+  const config = jsYaml.load(kubeConfigRawContent);
+  return config;
+}
 
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
   console.log('starting extension openshift-sandbox');
@@ -38,6 +59,9 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
   const LoginCommandParam = 'redhat.sandbox.login.command';
   const ContextNameParam = 'redhat.sandbox.context.name';
 
+  const kubeconfigUri = await extensionApi.kubernetes.getKubeconfig();
+  const kubeconfigFile = kubeconfigUri.fsPath;
+
   const disposable = provider.setKubernetesProviderConnectionFactory({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     create: async (params: { [key: string]: any }, _logger?: extensionApi.Logger, _token?: extensionApi.CancellationToken) => {
@@ -53,8 +77,8 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
         throw new Error('Login command is required.');
       }
 
-      const apiURLMatch = loginCommand.match(/--server=(.*)/);
-      const tokenMatch = loginCommand.match(/--token=(.*)/);
+      const apiURLMatch = loginCommand.match(/--server=([^\s]*)/);
+      const tokenMatch = loginCommand.match(/--token=([^\s]*)/);
       if (!apiURLMatch || !tokenMatch ) {
         throw new Error('Login command is invalid or missing required options --server and --token.');
       }
@@ -66,33 +90,45 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       const status = await isClusterAccessible(apiURL, token);
 
       // add cluster to kubeconfig
-      const config = new k8s.KubeConfig();
-      config.loadFromDefault();
-      
+      const config = await createOrLoadKubeConfig();
+     
       const suffix = Math.random().toString(36).substring(7);
 
-      const cluster: k8s.Cluster = {
-        server: apiURL,
+      const cluster = {
+        cluster: {
+          server: apiURL,
+        }, 
         name: `sandbox-cluster-${suffix}`, // generate a unique name for the cluster
         skipTLSVerify: false
       };
+
       const user = {
         name: `sandbox-user-${suffix}`, // generate a unique name for the user
-        token
+        user: {
+          token
+        }
       };
       const context = {
-        cluster: cluster.name,
-        user: user.name,
+        context: {
+          cluster: cluster.name,
+          user: user.name,
+          name: params[ContextNameParam]
+        },
         name: params[ContextNameParam]
       };
-      if (config.getContextObject(context.name)) {
-        throw new Error(`Context ${context.name} already exists, please choose a different name.`);
+
+      if (config['contexts'].find(context => context['name'] === params[ContextNameParam])) {
+        throw new Error(`Context ${params[ContextNameParam]} already exists, please choose a different name.`);
       }
-      config.addCluster(cluster); // has unique name
-      config.addUser(user); // has unique name
-      config.addContext(context); // the name is user-defined and checked for uniqueness above
-      const json = config.exportConfig();
-      fs.writeFileSync(path.join(k8s.findHomeDir(), '.kube', 'config'), json);
+      config['clusters'].push(cluster); // has unique name
+      config['users'].push(user); // has unique name
+      config['contexts'].push(context); // the name is user-defined and checked for uniqueness above
+
+      fs.writeFileSync(
+        kubeconfigFile, jsYaml.dump(config, { noArrayIndent: true, quotingType: '"', lineWidth: -1 }),
+        'utf-8',
+      );
+
       provider.registerKubernetesProviderConnection({
         name: params[ContextNameParam], 
         status: () => status, 
@@ -107,23 +143,22 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
     },
     creationDisplayName: 'Sandbox'
   });
-
-  const config = new k8s.KubeConfig();
-  config.loadFromDefault();
-
-  const sandboxConnectionPromises: Promise<extensionApi.KubernetesProviderConnection>[] 
-    = config.contexts.filter(context => { 
-      const serverName = config.getCluster(context.cluster).name
-      return serverName.startsWith('sandbox-cluster-');
-    }).map(async context => {
-      const cluster = config.getCluster(context.cluster);
-      const user = config.getUser(context.user);
-      const status = await isClusterAccessible(cluster.server, user.token);
+  
+  let sandboxConnections: extensionApi.KubernetesProviderConnection[] = [];
+  
+  if (fs.existsSync(kubeconfigFile)) {
+    const config = await loadKubeconfig(kubeconfigFile);
+    sandboxConnections = config['contexts'].filter(context => { 
+      return context['context']['cluster'].startsWith('sandbox-cluster-');
+    }).map(context => {
+      const clusterName = context['context']['cluster'];
+      const cluster = config['clusters'].find(cluster => cluster['name'] === clusterName);
+      const status = 'unknown';
       return {
         name: context.name,
         status: () => status,
         endpoint: {
-          apiURL: cluster.server
+          apiURL: cluster['cluster']['server']
         }, lifecycle: {
           delete: async () => {
             // delete from kubeconfig when delete for remote resource is unlocked
@@ -132,13 +167,14 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
         }
       };
     });
+  }
   
-  const sandboxConnections = await Promise.all(sandboxConnectionPromises);
   sandboxConnections.forEach(connection => provider.registerKubernetesProviderConnection(connection));
   
   extensionApi.containerEngine.onEvent(async event => {
     console.log('container event', event.Type);
   });
+  
   extensionApi.provider.onDidRegisterContainerConnection(async (connection) => {
     console.log('connection registered', connection);
   });
@@ -163,11 +199,5 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 }
 
 async function isClusterAccessible(apiURL: string, token: string): Promise<extensionApi.ProviderConnectionStatus> {
-    return got(apiURL, { headers: { Authorization: `Bearer ${token}`}}).then((response) => {
-      if (response.statusCode === 200) {
-        return 'started'
-      }
-      return 'unknown'
-    }
-  );
+  return 'unknown'
 }
