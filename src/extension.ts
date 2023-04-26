@@ -44,15 +44,6 @@ async function loadKubeconfig(kubeconfigFile): Promise<{ [key: string]: any }> {
   return config;
 }
 
-function updateConnections() {
-  setTimeout(() => {
-    
-
-    updateConnections(),
-    5000
-  });
-}
-
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
   console.log('starting extension openshift-sandbox');
 
@@ -189,34 +180,6 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
   }
   
   sandboxConnections.forEach(connection => provider.registerKubernetesProviderConnection(connection));
-
-  setTimeout(() => {
-    // sandboxConnections.forEach(connection => provider.)
-  })
-  
-  extensionApi.containerEngine.onEvent(async event => {
-    console.log('container event', event.Type);
-  });
-  
-  extensionApi.provider.onDidRegisterContainerConnection(async (connection) => {
-    console.log('connection registered', connection);
-  });
-
-  extensionApi.provider.onDidUnregisterContainerConnection(async (connection) => {  
-    console.log('connection unregistered', connection);
-  });
-
-  extensionApi.provider.onDidUpdateContainerConnection(async (connection) => {
-    console.log('connection updated', connection);
-  });
-  
-  extensionApi.provider.onDidUpdateKubernetesConnection(async (connection) => { 
-    console.log('kubernetes connection updated', connection);
-  });
-
-  extensionApi.provider.onDidUpdateProvider(async (provider) => {
-    console.log('provider updated', provider);
-  });
   
   extensionContext.subscriptions.push(provider);
 }
