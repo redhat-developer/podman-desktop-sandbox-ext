@@ -48,12 +48,21 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
   console.log('starting extension openshift-sandbox');
 
   let status: extensionApi.ProviderStatus = 'installed';
+  const icon = './icon.png';
 
   const providerOptions: extensionApi.ProviderOptions = {
     name: 'Developer Sandbox',
     id: 'redhat.sandbox',
     status,
+    images: {
+      icon,
+      logo: {
+        dark: icon,
+        light: icon,
+      }
+    },
   };
+
   const provider = extensionApi.provider.createProvider(providerOptions);
   
   const LoginCommandParam = 'redhat.sandbox.login.command';
@@ -153,10 +162,11 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
     }).map(context => {
       const clusterName = context['context']['cluster'];
       const cluster = config['clusters'].find(cluster => cluster['name'] === clusterName);
-      const status = 'unknown';
       return {
         name: context.name,
-        status: () => status,
+        status: () => {
+          return 'unknown'
+        },
         endpoint: {
           apiURL: cluster['cluster']['server']
         }, lifecycle: {
@@ -170,30 +180,6 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
   }
   
   sandboxConnections.forEach(connection => provider.registerKubernetesProviderConnection(connection));
-  
-  extensionApi.containerEngine.onEvent(async event => {
-    console.log('container event', event.Type);
-  });
-  
-  extensionApi.provider.onDidRegisterContainerConnection(async (connection) => {
-    console.log('connection registered', connection);
-  });
-
-  extensionApi.provider.onDidUnregisterContainerConnection(async (connection) => {  
-    console.log('connection unregistered', connection);
-  });
-
-  extensionApi.provider.onDidUpdateContainerConnection(async (connection) => {
-    console.log('connection updated', connection);
-  });
-  
-  extensionApi.provider.onDidUpdateKubernetesConnection(async (connection) => { 
-    console.log('kubernetes connection updated', connection);
-  });
-
-  extensionApi.provider.onDidUpdateProvider(async (provider) => {
-    console.log('provider updated', provider);
-  });
   
   extensionContext.subscriptions.push(provider);
 }
