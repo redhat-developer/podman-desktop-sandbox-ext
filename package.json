@@ -88,7 +88,7 @@
     }
   },
   "scripts": {
-    "build": "rollup --bundleConfigAsCjs --config rollup.config.js --compact --environment BUILD:production  && node ./scripts/build.js",
+    "build": "vite build && node ./scripts/build.js",
     "watch": "rollup --bundleConfigAsCjs --config rollup.config.js -w"
   },
   "dependencies": {
@@ -100,16 +100,10 @@
   },
   "devDependencies": {
     "7zip-min": "^1.4.3",
-    "@rollup/plugin-commonjs": "^24.0.1",
-    "@rollup/plugin-json": "^6.0.0",
-    "@rollup/plugin-node-resolve": "^15.0.2",
-    "@rollup/plugin-typescript": "^11.1.0",
-    "@types/js-yaml": "^4.0.5",
     "@types/node": "^18.15.11",
     "mkdirp": "^2.1.3",
-    "rollup": "^3.20.4",
-    "tslib": "^2.5.0",
     "typescript": "^5.0.4",
+    "vite": "^4.3.3",
     "zip-local": "^0.3.5"
   }
 }
