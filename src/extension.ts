@@ -16,42 +16,25 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
+import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
-import * as fs from 'fs-extra';
-import * as jsYaml from 'js-yaml';
+import got from 'got';
+import * as kubeconfig from './kubeconfig';
 
+const ProvideDisplayName = 'Developer Sandbox'
 
-async function createOrLoadKubeConfig(kubeconfigFile = extensionApi.kubernetes.getKubeconfig().fsPath) {
-  let config:any = {
-    contexts: [],
-    users: [],
-    clusters: []
-  };
-
-  // Do not load from default locations if it is not present
-  // It will be added later if sandbox url and token provided
-  if (fs.existsSync(kubeconfigFile)) {
-    config = loadKubeconfig(kubeconfigFile);
-  }
-  return config;
-}
-
-async function loadKubeconfig(kubeconfigFile): Promise<{ [key: string]: any }> {
-  // load existing sandbox contexts form kubeconfig
-  const kubeConfigRawContent = await fs.promises.readFile(kubeconfigFile, 'utf-8');
-  // parse the content using jsYaml
-  const config = jsYaml.load(kubeConfigRawContent);
-  return config;
-}
+let provider: extensionApi.Provider;
+let updateConnectionTimeout: NodeJS.Timeout;
+let registeredConnections: extensionApi.Disposable[] = [];
 
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
   console.log('starting extension openshift-sandbox');
 
-  let status: extensionApi.ProviderStatus = 'installed';
+  let status: extensionApi.ProviderStatus = 'ready';
   const icon = './icon.png';
 
   const providerOptions: extensionApi.ProviderOptions = {
-    name: 'Developer Sandbox',
+    name: ProvideDisplayName,
     id: 'redhat.sandbox',
     status,
     images: {
@@ -63,13 +46,14 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
     },
   };
 
-  const provider = extensionApi.provider.createProvider(providerOptions);
+  provider = extensionApi.provider.createProvider(providerOptions);
   
   const LoginCommandParam = 'redhat.sandbox.login.command';
   const ContextNameParam = 'redhat.sandbox.context.name';
 
-  const kubeconfigUri = await extensionApi.kubernetes.getKubeconfig();
+  const kubeconfigUri = extensionApi.kubernetes.getKubeconfig();
   const kubeconfigFile = kubeconfigUri.fsPath;
+  console.log('Configfile location', kubeconfigFile);
 
   const disposable = provider.setKubernetesProviderConnectionFactory({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,13 +65,14 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       }
 
       // get form parameters
-      const loginCommand:string = params[LoginCommandParam];
+      const loginCommand: string = params[LoginCommandParam];
       if (loginCommand.trim().length === 0) {
         throw new Error('Login command is required.');
       }
 
       const apiURLMatch = loginCommand.match(/--server=([^\s]*)/);
       const tokenMatch = loginCommand.match(/--token=([^\s]*)/);
+      
       if (!apiURLMatch || !tokenMatch ) {
         throw new Error('Login command is invalid or missing required options --server and --token.');
       }
@@ -95,50 +80,39 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       const apiURL = apiURLMatch[1];
       const token = tokenMatch[1];
 
-      // check if cluster is accessible
-      const status = await isClusterAccessible(apiURL, token);
-
       // add cluster to kubeconfig
-      const config = await createOrLoadKubeConfig();
+      const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
      
-      const suffix = Math.random().toString(36).substring(7);
-
-      const cluster = {
-        cluster: {
-          server: apiURL,
-        }, 
-        name: `sandbox-cluster-${suffix}`, // generate a unique name for the cluster
-        skipTLSVerify: false
-      };
-
-      const user = {
-        name: `sandbox-user-${suffix}`, // generate a unique name for the user
-        user: {
-          token
-        }
-      };
-      const context = {
-        context: {
-          cluster: cluster.name,
-          user: user.name,
-          name: params[ContextNameParam]
-        },
-        name: params[ContextNameParam]
-      };
-
       if (config['contexts'].find(context => context['name'] === params[ContextNameParam])) {
         throw new Error(`Context ${params[ContextNameParam]} already exists, please choose a different name.`);
       }
-      config['clusters'].push(cluster); // has unique name
-      config['users'].push(user); // has unique name
-      config['contexts'].push(context); // the name is user-defined and checked for uniqueness above
 
-      fs.writeFileSync(
-        kubeconfigFile, jsYaml.dump(config, { noArrayIndent: true, quotingType: '"', lineWidth: -1 }),
-        'utf-8',
-      );
+      const suffix = Math.random().toString(36).substring(7);
 
-      provider.registerKubernetesProviderConnection({
+      const clusterName = `sandbox-cluster-${suffix}`;  // has unique name
+      const userName = `sandbox-user-${suffix}`; // generate a unique name for the user
+
+      config.addCluster({
+        server: apiURL,
+        name: clusterName,
+        skipTLSVerify: false
+      });
+      config.addUser({
+        name: userName,
+        token
+      });
+      config.addContext({
+        cluster: clusterName,
+        user: userName,
+        name: params[ContextNameParam],
+      });
+
+      kubeconfig.exportToFile(config, kubeconfigFile);
+
+      // check if cluster is accessible
+      const status = await getConnectionStatus(apiURL, token);
+      
+      const disposable = provider.registerKubernetesProviderConnection({
         name: params[ContextNameParam], 
         status: () => status, 
         endpoint: {
@@ -149,41 +123,97 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
           }
         }
       });
+      registeredConnections.push(disposable);
     },
-    creationDisplayName: 'Sandbox'
+    creationDisplayName: ProvideDisplayName,
   });
-  
-  let sandboxConnections: extensionApi.KubernetesProviderConnection[] = [];
-  
-  if (fs.existsSync(kubeconfigFile)) {
-    const config = await loadKubeconfig(kubeconfigFile);
-    sandboxConnections = config['contexts'].filter(context => { 
-      return context['context']['cluster'].startsWith('sandbox-cluster-');
-    }).map(context => {
-      const clusterName = context['context']['cluster'];
-      const cluster = config['clusters'].find(cluster => cluster['name'] === clusterName);
-      return {
-        name: context.name,
-        status: () => {
-          return 'unknown'
-        },
-        endpoint: {
-          apiURL: cluster['cluster']['server']
-        }, lifecycle: {
-          delete: async () => {
-            // delete from kubeconfig when delete for remote resource is unlocked
-            return;
-          }
-        }
-      };
-    });
-  }
-  
-  sandboxConnections.forEach(connection => provider.registerKubernetesProviderConnection(connection));
-  
+
   extensionContext.subscriptions.push(provider);
+  // run update connections once to load existing connections to avoid 2s delay
+  updateConnections().then (() => {
+    updateConnectionsPreiodically()
+  });
 }
 
-async function isClusterAccessible(apiURL: string, token: string): Promise<extensionApi.ProviderConnectionStatus> {
-  return 'unknown'
+function updateConnectionsPreiodically(): void {
+   updateConnectionTimeout = setTimeout(() => {
+    updateConnections().then(updateConnectionsPreiodically);
+   }, 2000);
+}
+
+export function deactivate(): void {
+  console.log('deactivating extension openshift-sandbox');
+  if (updateConnectionTimeout) {
+    clearTimeout(updateConnectionTimeout);
+  } 
+}
+
+async function updateConnections(): Promise<void> {
+  let config:KubeConfig;
+  let attempts = 0;
+  while (attempts < 5) {
+    try {
+      config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
+    } catch (err) {
+      console.error('Failed to load kubeconfig:', err);
+    }
+    await new Promise(resolve => setTimeout(resolve, 500));
+    attempts++;
+  }
+
+  // TODO: Inform user that kubeconfig cannot be loaded
+  if (!config) {
+    console.error('Failed to load kubeconfig');
+    registeredConnections.forEach(connection => connection.dispose());
+    return;
+  }
+
+  registeredConnections = await Promise.all(config.getContexts().filter(
+    context => context.cluster.startsWith('sandbox-cluster-')
+  ).map(async context => {
+    const cluster = config.getCluster(context.cluster);
+    const status = await getConnectionStatus(cluster.server, config.getUser(context.user).token);
+    return {
+      name: context.name,
+      status: () => {
+        return status;
+      },
+      endpoint: {
+        apiURL: cluster.server
+      }, lifecycle: {
+        delete: async () => {
+          // delete from kubeconfig when delete for remote resource is unlocked
+          return;
+        }
+      }
+    };
+  })).then(connections => {
+    registeredConnections.forEach(connection => connection.dispose()); 
+    return connections.map(connection => provider.registerKubernetesProviderConnection(connection));
+  });
+}
+
+const StartedStatus: extensionApi.ProviderConnectionStatus = 'started';
+const UnknownStatus: extensionApi.ProviderConnectionStatus = 'unknown';
+
+async function getConnectionStatus(apiURL: string, token: string) : Promise<extensionApi.ProviderConnectionStatus> {
+  return isTokenValid(apiURL, token).then(() => {
+    return StartedStatus;
+  }).catch((error) => {
+    console.error('Failed to connect to cluster:', error);
+    return UnknownStatus;
+  });
+}
+
+async function isTokenValid(apiURL: string, token: string): Promise<void> {
+  const usersApiURL = `${apiURL}/apis/user.openshift.io/v1/users/~`;
+  return got(usersApiURL, { headers: { Authorization: `Bearer ${token}`}}).then((response) => {
+    if (response.statusCode === 200) {
+      const responseObj = JSON.parse(response.body);
+      if (responseObj.kind === 'User') {
+        return;
+      }
+    }
+    throw new Error('Token has expired.');
+  });
 }
