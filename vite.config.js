@@ -46,6 +46,7 @@ const config = {
     },
     rollupOptions: {
       external: [
+        '@kubernetes/client-node',
         '@podman-desktop/api',
         ...builtinModules.flatMap(p => [p, `node:${p}`]),
       ],
