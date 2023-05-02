@@ -18,6 +18,7 @@
 
 import {join} from 'path';
 import {builtinModules} from 'module';
+import nodePolyfills from "rollup-plugin-node-polyfills";
 
 const PACKAGE_ROOT = __dirname;
 
@@ -32,6 +33,7 @@ const config = {
   resolve: {
     alias: {
       '/@/': join(PACKAGE_ROOT, 'src', '/'),
+      'crypto': 'crypto-browserify',
     },
   },
   build: {
@@ -52,6 +54,9 @@ const config = {
       output: {
         entryFileNames: '[name].js',
       },
+      plugins: [
+        nodePolyfills({ crypto: true })
+      ],
     },
     emptyOutDir: true,
     reportCompressedSize: false,
