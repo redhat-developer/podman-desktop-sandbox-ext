@@ -18,7 +18,7 @@
 
 import {join} from 'path';
 import {builtinModules} from 'module';
-import nodePolyfills from "rollup-plugin-node-polyfills";
+import {node} from './.electron-vendors.cache.json';
 
 const PACKAGE_ROOT = __dirname;
 
@@ -33,15 +33,15 @@ const config = {
   resolve: {
     alias: {
       '/@/': join(PACKAGE_ROOT, 'src', '/'),
-      'crypto': 'crypto-browserify',
     },
   },
   build: {
     sourcemap: 'inline',
-    target: 'esnext',
+    target: `node${node}`,
     outDir: 'dist',
     assetsDir: '.',
     minify: process.env.MODE === 'production' ? 'esbuild' : false,
+    
     lib: {
       entry: 'src/extension.ts',
       formats: ['cjs'],
@@ -49,14 +49,12 @@ const config = {
     rollupOptions: {
       external: [
         '@podman-desktop/api',
+        '@kubernetes/client-node',
         ...builtinModules.flatMap(p => [p, `node:${p}`]),
       ],
       output: {
         entryFileNames: '[name].js',
       },
-      plugins: [
-        nodePolyfills({ crypto: true })
-      ],
     },
     emptyOutDir: true,
     reportCompressedSize: false,
