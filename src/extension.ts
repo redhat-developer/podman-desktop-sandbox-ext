@@ -23,9 +23,60 @@ import * as kubeconfig from './kubeconfig';
 
 const ProvideDisplayName = 'Developer Sandbox'
 
+interface ConnectionData {
+  disposable?: extensionApi.Disposable;
+  connection: extensionApi.KubernetesProviderConnection;
+  status: extensionApi.ProviderConnectionStatus;
+}
+
+const StartedStatus: extensionApi.ProviderConnectionStatus = 'started';
+const UnknownStatus: extensionApi.ProviderConnectionStatus = 'unknown';
+
 let provider: extensionApi.Provider;
 let updateConnectionTimeout: NodeJS.Timeout;
-let registeredConnections: extensionApi.Disposable[] = [];
+let registeredConnections: Map<string, ConnectionData> = new Map<string, ConnectionData>();
+
+async function deleteContext(contextName: string): Promise<void> {
+  const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
+  const context = config.getContextObject(contextName);
+  const cluster = config.getCluster(context.cluster);
+  const user = config.getUser(context.user);
+  config.getContexts().splice(config.getContexts().indexOf(context), 1);
+  config.getClusters().splice(config.getClusters().indexOf(cluster), 1);
+  config.getUsers().splice(config.getUsers().indexOf(user), 1);
+  kubeconfig.exportToFile(config, extensionApi.kubernetes.getKubeconfig().fsPath);
+}
+
+function deleteConnection(contextName: string) {
+  const deletedConnection = registeredConnections.get(contextName);
+  registeredConnections.delete(contextName);
+  deletedConnection.disposable.dispose();
+}
+
+async function deleteConnectionAndUpdateKubeconfig(contextName: string): Promise<void> {
+  deleteConnection(contextName);
+  deleteContext(contextName);
+}
+
+async function registerConnection(contextName:string, apiURL:string, token:string): Promise<ConnectionData> {
+  // check if cluster is accessible
+  // const status = await getConnectionStatus(apiURL, token);
+  const connection = {
+    name: contextName,
+    status: () => registeredConnections.get(contextName).status, 
+    endpoint: {
+      apiURL
+    }, lifecycle: {
+      delete: async () => { 
+        return deleteConnectionAndUpdateKubeconfig(contextName)
+      }
+    }
+  };
+  const connectionData:ConnectionData = { connection, status: UnknownStatus };
+  registeredConnections.set(contextName, connectionData);
+  connectionData.disposable = provider.registerKubernetesProviderConnection(connection);
+  return connectionData;
+}
 
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
   console.log('starting extension openshift-sandbox');
@@ -109,36 +160,19 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
       kubeconfig.exportToFile(config, kubeconfigFile);
 
-      // check if cluster is accessible
-      const status = await getConnectionStatus(apiURL, token);
-      
-      const disposable = provider.registerKubernetesProviderConnection({
-        name: params[ContextNameParam], 
-        status: () => status, 
-        endpoint: {
-          apiURL
-        }, lifecycle: {
-          delete: async () => {
-            return;
-          }
-        }
-      });
-      registeredConnections.push(disposable);
+      await registerConnection(params[ContextNameParam], apiURL, token);
     },
     creationDisplayName: ProvideDisplayName,
   });
 
   extensionContext.subscriptions.push(provider);
-  // run update connections once to load existing connections to avoid 2s delay
-  updateConnections().then (() => {
-    updateConnectionsPreiodically()
-  });
+  updateConnectionsPreiodically();
 }
 
 function updateConnectionsPreiodically(): void {
-   updateConnectionTimeout = setTimeout(() => {
-    updateConnections().then(updateConnectionsPreiodically);
-   }, 2000);
+   updateConnections().then(() => {
+    updateConnectionTimeout = setTimeout(updateConnectionsPreiodically,2000);
+   });
 }
 
 export function deactivate(): void {
@@ -154,6 +188,7 @@ async function updateConnections(): Promise<void> {
   while (attempts < 5) {
     try {
       config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
+      break;
     } catch (err) {
       console.error('Failed to load kubeconfig:', err);
     }
@@ -164,37 +199,40 @@ async function updateConnections(): Promise<void> {
   // TODO: Inform user that kubeconfig cannot be loaded
   if (!config) {
     console.error('Failed to load kubeconfig');
-    registeredConnections.forEach(connection => connection.dispose());
     return;
   }
 
-  registeredConnections = await Promise.all(config.getContexts().filter(
-    context => context.cluster.startsWith('sandbox-cluster-')
-  ).map(async context => {
-    const cluster = config.getCluster(context.cluster);
-    const status = await getConnectionStatus(cluster.server, config.getUser(context.user).token);
-    return {
-      name: context.name,
-      status: () => {
-        return status;
-      },
-      endpoint: {
-        apiURL: cluster.server
-      }, lifecycle: {
-        delete: async () => {
-          // delete from kubeconfig when delete for remote resource is unlocked
-          return;
-        }
-      }
-    };
-  })).then(connections => {
-    registeredConnections.forEach(connection => connection.dispose()); 
-    return connections.map(connection => provider.registerKubernetesProviderConnection(connection));
+  // delete connections that are not in kubeconfig anymore
+  const deletedConnections = Array.from(registeredConnections.keys()) 
+    .filter((contextName) => !config.getContexts().find(context => context.name === contextName));
+  deletedConnections.forEach(contextName => {
+    const deletedConnection = registeredConnections.get(contextName);
+    deleteConnection(contextName);
+    deletedConnection.disposable.dispose();
   });
-}
 
-const StartedStatus: extensionApi.ProviderConnectionStatus = 'started';
-const UnknownStatus: extensionApi.ProviderConnectionStatus = 'unknown';
+  // update status of existin connections 
+  const updateStatusRequests = Array.from(registeredConnections.keys()).map((contextName) => {
+    // get current token from config file
+    const token = config.getUser(config.getContextObject(contextName).user).token;
+    const connectionData = registeredConnections.get(contextName);
+    return getConnectionStatus(connectionData.connection.endpoint.apiURL, token).then((status) => {
+      connectionData.status = status;
+    });
+  });
+
+  // what if connection is not responding?
+  await Promise.all(updateStatusRequests);
+  
+  // add connections that are in kubeconfig but not registered
+  const addedSandboxContexts = config.getContexts()
+    .filter((context) => context.cluster.startsWith('sandbox-cluster-'))
+    .filter((context) => !registeredConnections.get(context.name));
+  await Promise.all(addedSandboxContexts.map(context => {
+    const cluster = config.getCluster(context.cluster);
+    return registerConnection(context.name, cluster.server, config.getUser(context.user).token);
+  }));
+}
 
 async function getConnectionStatus(apiURL: string, token: string) : Promise<extensionApi.ProviderConnectionStatus> {
   return isTokenValid(apiURL, token).then(() => {
