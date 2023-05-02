@@ -166,12 +166,12 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
   });
 
   extensionContext.subscriptions.push(provider);
-  updateConnectionsPreiodically();
+  updateConnectionsPeriodically();
 }
 
-function updateConnectionsPreiodically(): void {
+function updateConnectionsPeriodically(): void {
    updateConnections().then(() => {
-    updateConnectionTimeout = setTimeout(updateConnectionsPreiodically,2000);
+    updateConnectionTimeout = setTimeout(updateConnectionsPeriodically,2000);
    });
 }
 
