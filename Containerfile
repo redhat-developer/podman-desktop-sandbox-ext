@@ -22,8 +22,4 @@ LABEL org.opencontainers.image.title="OpenShift developer sandbox provider" \
         org.opencontainers.image.vendor="Red Hat" \
         io.podman-desktop.api.version=">= 0.14.1"
 
-COPY package.json /extension/
-COPY icon.png /extension/
-COPY LICENSE /extension/
-COPY README.md /extension/
-COPY dist /extension/dist
+COPY builtin/redhat-sandbox.cdix /extension/dist
