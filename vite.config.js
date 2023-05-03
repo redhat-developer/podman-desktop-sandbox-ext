@@ -41,7 +41,6 @@ const config = {
     outDir: 'dist',
     assetsDir: '.',
     minify: process.env.MODE === 'production' ? 'esbuild' : false,
-    
     lib: {
       entry: 'src/extension.ts',
       formats: ['cjs'],
