@@ -11,38 +11,6 @@
   },
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "redhat.sandbox.getAuthSession",
-        "title": "Get Red Hat SSO token",
-        "category": "OpenShift Sandbox"
-      },
-      {
-        "command": "redhat.sandbox.getStatus",
-        "title": "Get Red Hat OpenShift Sandbox instance status",
-        "category": "OpenShift Sandbox"
-      },
-      {
-        "command": "redhat.sandbox.requestVerificationCode",
-        "title": "Request account verification code",
-        "category": "OpenShift Sandbox"
-      },
-      {
-        "command": "redhat.sandbox.submitVerificationCode",
-        "title": "Submit account verification code",
-        "category": "OpenShift Sandbox"
-      },
-      {
-        "command": "redhat.sandbox.openDashboard",
-        "title": "Open Sandbox Dashboard",
-        "category": "OpenShift Sandbox"
-      },
-      {
-        "command": "redhat.sandbox.login",
-        "title": "Login to sandbox",
-        "category": "OpenShift Sandbox"
-      }
-    ],
     "configuration": {
       "title": "OpenShift Developer Sandbox",
       "properties": {
@@ -67,22 +35,6 @@
           "default": "",
           "scope": "KubernetesProviderConnectionFactory",
           "description": "OpenShift Developer Sandbox login command from Developer Console"
-        },
-        "verification.phone.number": {
-          "type": "string",
-          "title": "Phone for account verification",
-          "format": "",
-          "scope": "signupProvider",
-          "when": "sandbox.code.request",
-          "description": "Phone number associated with account"
-        },
-        "verification.code": {
-          "type": "integer",
-          "title": "Account verification code",
-          "format": "",
-          "scope": "signupProvider",
-          "when": "sandbox.code.verification",
-          "description": "Verification code"
         }
       }
     }
