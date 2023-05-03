@@ -31,6 +31,7 @@ export function createOrLoadFromFile(configFile: string): KubeConfig {
 
 export function exportToFile(kubeconfig: KubeConfig, configLocation: string): void {
   const configContents = JSON.parse(kubeconfig.exportConfig());
+  fs.ensureFileSync(configLocation);
   fs.writeFileSync(
     configLocation, jsYaml.dump(configContents, { noArrayIndent: true, quotingType: '"', lineWidth: -1 }),
     'utf-8',
