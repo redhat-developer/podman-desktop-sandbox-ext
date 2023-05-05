@@ -28,13 +28,13 @@
           "type": "string",
           "default": "",
           "scope": "KubernetesProviderConnectionFactory",
-          "description": "OpenShift Developer Sandbox Context name"
+          "description": "Context name"
         },
         "redhat.sandbox.login.command": {
           "type": "string",
           "default": "",
           "scope": "KubernetesProviderConnectionFactory",
-          "description": "OpenShift Developer Sandbox login command from Developer Console"
+          "description": "Login command from Developer Console"
         }
       }
     }
