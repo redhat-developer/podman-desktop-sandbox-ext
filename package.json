@@ -14,16 +14,6 @@
     "configuration": {
       "title": "OpenShift Developer Sandbox",
       "properties": {
-        "redhat.sandbox.registration.api.url": {
-          "type": "string",
-          "default": "https://registration-service-toolchain-host-operator.apps.sandbox.x8i5.p1.openshiftapps.com",
-          "description": "OpenShift Developer Sandbox Registration API URL"
-        },
-        "redhat.sandbox.api.timeout": {
-          "type": "number",
-          "default": "100",
-          "description": "OpenShift Developer Sandbox Registration API URL timeout in seconds"
-        },
         "redhat.sandbox.form.description": {
           "type": "markdown",
           "scope": "KubernetesProviderConnectionFactory",
