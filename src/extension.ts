@@ -95,7 +95,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
         light: icon,
       }
     },
-    emptyConnectionMarkdownDescription: 'A free, private OpenShift environment including one project and a resource quota of 14 GB RAM, and 40 GB storage. It lasts 30 days.\n\nSign up at [https://developers.redhat.com/developer-sandbox](https://developers.redhat.com/developer-sandbox).',
+    emptyConnectionMarkdownDescription: 'A free, private OpenShift environment including one project and a resource quota of 14 GB RAM, and 40 GB storage. It lasts 30 days.\n\nSign up at [https://developers.redhat.com/developer-sandbox](https://developers.redhat.com/developer-sandbox/?sc_cid=7013a000003SUmgAAG).',
   };
 
   provider = extensionApi.provider.createProvider(providerOptions);
