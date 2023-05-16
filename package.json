@@ -33,7 +33,7 @@
           "type": "string",
           "default": "",
           "scope": "KubernetesProviderConnectionFactory",
-          "description": "Context name"
+          "description": "Context name for Developer Sandbox to easily find it in your Kubernetes contexts"
         },
         "redhat.sandbox.login.command": {
           "type": "string",
