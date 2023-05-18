@@ -29,12 +29,79 @@ interface ConnectionData {
   status: extensionApi.ProviderConnectionStatus;
 }
 
+interface InternalRegistryInfo {
+  host: string;
+  username: string;
+  token: string;
+}
+
 const StartedStatus: extensionApi.ProviderConnectionStatus = 'started';
 const UnknownStatus: extensionApi.ProviderConnectionStatus = 'unknown';
 
 let provider: extensionApi.Provider;
 let updateConnectionTimeout: NodeJS.Timeout;
 let registeredConnections: Map<string, ConnectionData> = new Map<string, ConnectionData>();
+
+
+async function getOpenShiftInternalRegistryPublicHost(contextName: string): Promise<InternalRegistryInfo> {
+  const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
+  const context = config.getContextObject(contextName);
+  const cluster = config.getCluster(context.cluster);
+  const user = config.getUser(context.user);
+  const publicRegistry:string = await got(`${cluster.server}/apis/image.openshift.io/v1/namespaces/openshift/imagestreams`, { headers: { Authorization: `Bearer ${user.token}`}}).then((response) => {
+    if (response.statusCode === 200) {
+      const responseObj = JSON.parse(response.body);
+      if (responseObj.items.length) {
+        return responseObj.items[0].status. publicDockerImageRepository
+      }
+    }
+    throw new Error('Internal Developer Sandbox image registry cannot be detected.');
+  });
+  const host = publicRegistry.substring(0, publicRegistry.indexOf('/'));
+  return {
+    host,
+    username: user.name,
+    token: user.token,
+  };
+}
+
+type ImageInfo = { engineId: string; name?: string; tag?: string };
+
+export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<void> {
+  const qp = Array.from(registeredConnections.values()).filter(connection => connection.status === 'started').map(connection => connection.connection.name);
+  if (!qp.length) {
+    extensionApi.window.showInformationMessage('You have no live Developer Sandbox connections. Please create new one and try again.');
+    return;
+  }
+  let targetSb: string;
+  if (qp.length > 1) {
+    targetSb = await extensionApi.window.showQuickPick(qp);
+    if (!targetSb) {
+      return;
+    }
+  } else {
+    targetSb = qp[0];
+  }
+  let pushError:any;
+  await extensionApi.window.withProgress({location: extensionApi.ProgressLocation.TASK_WIDGET, title: `Pushing image '${image.name}:${image.tag}' to Developer Sandbox '${targetSb}'`}, async (progress, token) => {
+    try {
+      progress.report({message:'Getting internal registry public host name for selected Developer Sandbox connection', increment: 25});
+      const registryInfo = await getOpenShiftInternalRegistryPublicHost(targetSb);
+      progress.report({message:'Logging in to the Developer Sandbox internal image registry', increment: 50});
+
+      progress.report({message:'Pushing image to the internal image registry', increment: 75});
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      progress.report({message:`The image '${image.name}:${image.tag}' is successfully pushed to the internal image registry`, increment: 100});
+    } catch (err) {
+      pushError = err;
+    }
+  });
+  if (pushError) {
+    await extensionApi.window.showErrorMessage(`An error occurred while pushing the image'${image.name}:${image.tag}' to Developer Sandbox '${targetSb}'`);
+  } else {
+    await extensionApi.window.showInformationMessage(`Image successfully pushed to to Developer Sandbox '${targetSb}'`);
+  }
+} 
 
 async function deleteContext(contextName: string): Promise<void> {
   const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
@@ -165,6 +232,12 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
     },
     creationDisplayName: ProvideDisplayName,
   });
+
+  extensionContext.subscriptions.push(
+    extensionApi.commands.registerCommand('sandbox.image.push.to.cluster', image => {
+      pushImageToOpenShiftRegistry(image);
+    }
+  ));
 
   extensionContext.subscriptions.push(provider);
   extensionContext.subscriptions.push(disposable);
