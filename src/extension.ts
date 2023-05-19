@@ -20,6 +20,7 @@ import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig';
+import { execPodman } from './podman-cli';
 
 const ProvideDisplayName = 'Developer Sandbox'
 
@@ -42,25 +43,43 @@ let provider: extensionApi.Provider;
 let updateConnectionTimeout: NodeJS.Timeout;
 let registeredConnections: Map<string, ConnectionData> = new Map<string, ConnectionData>();
 
-
 async function getOpenShiftInternalRegistryPublicHost(contextName: string): Promise<InternalRegistryInfo> {
   const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
   const context = config.getContextObject(contextName);
   const cluster = config.getCluster(context.cluster);
   const user = config.getUser(context.user);
-  const publicRegistry:string = await got(`${cluster.server}/apis/image.openshift.io/v1/namespaces/openshift/imagestreams`, { headers: { Authorization: `Bearer ${user.token}`}}).then((response) => {
+  const gotOptions = {
+    headers: { 
+        Authorization: `Bearer ${user.token}`
+    }
+  };
+  const publicRegistry:string = await got(
+    `${cluster.server}/apis/image.openshift.io/v1/namespaces/openshift/imagestreams`,
+    gotOptions
+  ).then((response) => {
     if (response.statusCode === 200) {
       const responseObj = JSON.parse(response.body);
       if (responseObj.items.length) {
-        return responseObj.items[0].status. publicDockerImageRepository
+        return responseObj.items[0].status.publicDockerImageRepository
       }
     }
-    throw new Error('Internal Developer Sandbox image registry cannot be detected.');
+    throw new Error('Could not detect internal Developer Sandbox image registry.');
   });
   const host = publicRegistry.substring(0, publicRegistry.indexOf('/'));
+
+  const username: string = await got(
+    `${cluster.server}/apis/user.openshift.io/v1/users/~`,
+    gotOptions
+  ).then((response) => {
+    if (response.statusCode === 200) {
+      const responseObj = JSON.parse(response.body);
+      return responseObj.metadata.name;
+    }
+    throw new Error('Developer Sandbox username cannot be detected.');
+  });
   return {
     host,
-    username: user.name,
+    username,
     token: user.token,
   };
 }
@@ -70,7 +89,7 @@ type ImageInfo = { engineId: string; name?: string; tag?: string };
 export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<void> {
   const qp = Array.from(registeredConnections.values()).filter(connection => connection.status === 'started').map(connection => connection.connection.name);
   if (!qp.length) {
-    extensionApi.window.showInformationMessage('You have no live Developer Sandbox connections. Please create new one and try again.');
+    extensionApi.window.showInformationMessage('You have no running Developer Sandbox connections. Please create new one and try again.');
     return;
   }
   let targetSb: string;
@@ -85,21 +104,36 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
   let pushError:any;
   await extensionApi.window.withProgress({location: extensionApi.ProgressLocation.TASK_WIDGET, title: `Pushing image '${image.name}:${image.tag}' to Developer Sandbox '${targetSb}'`}, async (progress, token) => {
     try {
-      progress.report({message:'Getting internal registry public host name for selected Developer Sandbox connection', increment: 25});
+      progress.report({increment: 25});
       const registryInfo = await getOpenShiftInternalRegistryPublicHost(targetSb);
-      progress.report({message:'Logging in to the Developer Sandbox internal image registry', increment: 50});
-
-      progress.report({message:'Pushing image to the internal image registry', increment: 75});
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      progress.report({message:`The image '${image.name}:${image.tag}' is successfully pushed to the internal image registry`, increment: 100});
+      progress.report({increment: 50});
+      const loginOutput = await execPodman([
+        'login', 
+        '-u', 
+        registryInfo.username,
+        '-p',
+        registryInfo.token,
+        registryInfo.host,
+      ]);
+      progress.report({increment: 75});
+      const lastIndexOfSlash = image.name.lastIndexOf('/');
+      const imageShortName = lastIndexOfSlash !== -1 ? image.name.substring(lastIndexOfSlash+1) : image.name;
+      const imageTagSuffix = image.tag ? `:${image.tag}` : ``;
+      const pushOutput = await execPodman([
+        'image',
+        'push',
+        `${image.name}:${image.tag}`,
+        `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`
+      ]);
+      progress.report({increment: 100});
     } catch (err) {
       pushError = err;
     }
   });
   if (pushError) {
-    await extensionApi.window.showErrorMessage(`An error occurred while pushing the image'${image.name}:${image.tag}' to Developer Sandbox '${targetSb}'`);
+    await extensionApi.window.showErrorMessage(`An error occurred while pushing the image'${image.name}:${image.tag}' to Developer Sandbox cluster'${targetSb}'.${pushError}`);
   } else {
-    await extensionApi.window.showInformationMessage(`Image successfully pushed to to Developer Sandbox '${targetSb}'`);
+    await extensionApi.window.showInformationMessage(`The image successfully pushed to to Developer Sandbox cluster. '${targetSb}'`);
   }
 } 
 
