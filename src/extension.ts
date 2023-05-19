@@ -43,6 +43,26 @@ let provider: extensionApi.Provider;
 let updateConnectionTimeout: NodeJS.Timeout;
 let registeredConnections: Map<string, ConnectionData> = new Map<string, ConnectionData>();
 
+async function whoami(clusterUrl: string, token: string): Promise<string> {
+   const gotOptions = {
+    headers: { 
+        Authorization: `Bearer ${token}`
+    }
+  };
+
+  const username: string = await got(
+    `${clusterUrl}/apis/user.openshift.io/v1/users/~`,
+    gotOptions
+  ).then((response) => {
+    if (response.statusCode === 200) {
+      const responseObj = JSON.parse(response.body);
+      return responseObj.metadata.name;
+    }
+    throw new Error('Developer Sandbox username cannot be detected.');
+  });
+  return username;
+}
+
 async function getOpenShiftInternalRegistryPublicHost(contextName: string): Promise<InternalRegistryInfo> {
   const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
   const context = config.getContextObject(contextName);
@@ -67,16 +87,8 @@ async function getOpenShiftInternalRegistryPublicHost(contextName: string): Prom
   });
   const host = publicRegistry.substring(0, publicRegistry.indexOf('/'));
 
-  const username: string = await got(
-    `${cluster.server}/apis/user.openshift.io/v1/users/~`,
-    gotOptions
-  ).then((response) => {
-    if (response.statusCode === 200) {
-      const responseObj = JSON.parse(response.body);
-      return responseObj.metadata.name;
-    }
-    throw new Error('Developer Sandbox username cannot be detected.');
-  });
+  const username: string = await whoami(cluster.server, user.token);
+
   return {
     host,
     username,
@@ -244,20 +256,22 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
       const clusterName = `sandbox-cluster-${suffix}`;  // has unique name
       const userName = `sandbox-user-${suffix}`; // generate a unique name for the user
+      const username: string = await whoami(apiURL, token);
 
       config.addCluster({
         server: apiURL,
         name: clusterName,
-        skipTLSVerify: false
+        skipTLSVerify: false,
       });
       config.addUser({
         name: userName,
-        token
+        token,
       });
       config.addContext({
         cluster: clusterName,
         user: userName,
         name: params[ContextNameParam],
+        namespace: `${username}-dev`,
       });
 
       kubeconfig.exportToFile(config, kubeconfigFile);
