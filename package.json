@@ -32,6 +32,14 @@
           "description": "Login command from Developer Console"
         }
       }
+    },
+    "menus": {
+      "dashboard/image": [
+        {
+          "command": "sandbox.image.push.to.cluster",
+          "title": "Push image to Developer Sandbox cluster"
+        }
+      ]
     }
   },
   "scripts": {
@@ -46,9 +54,9 @@
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
+    "7zip-min": "^1.4.3",
     "@types/fs-extra": "^11.0.1",
     "@types/node": "^18.15.11",
-    "7zip-min": "^1.4.3",
     "byline": "^5.0.0",
     "copyfiles": "^2.4.1",
     "mkdirp": "^2.1.3",
