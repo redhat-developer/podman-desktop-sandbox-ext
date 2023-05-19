@@ -19,6 +19,7 @@
 import { platform as getPlatform } from 'node:os';
 import { spawn } from 'node:child_process';
 import type { CancellationToken, Logger } from '@podman-desktop/api';
+import { proxy } from '@podman-desktop/api';
 import { configuration } from '@podman-desktop/api';
 
 const macosExtraPath = '/usr/local/bin:/opt/homebrew/bin:/opt/local/bin:/opt/podman/bin';
@@ -50,6 +51,29 @@ export function getInstallationPath(): string {
   } else {
     return env.PATH;
   }
+}
+function createEnvForProxy() {
+  // Add proxy environment variables if proxy is enabled
+  const proxyEnabled = proxy.isEnabled();
+  const env = {};
+  if (proxyEnabled) {
+    const proxySettings = proxy.getProxySettings();
+    if (proxySettings?.httpProxy) {
+      if (isWindows()) {
+        env['env:http_proxy'] = proxySettings.httpProxy;
+      } else {
+        env['http_proxy'] = proxySettings.httpProxy;
+      }
+    }
+    if (proxySettings?.httpsProxy) {
+      if (isWindows()) {
+        env['env:https_proxy'] = proxySettings.httpsProxy;
+      } else {
+        env['https_proxy'] = proxySettings.httpsProxy;
+      }
+    }
+  }
+  return env;
 }
 
 export function getPodmanCli(): string {
@@ -102,6 +126,9 @@ function execPromise(
   if (options?.env) {
     env = Object.assign(env, options.env);
   }
+
+  env = Object.assign(env, createEnvForProxy());
+
   return new Promise((resolve, reject) => {
     let stdOut = '';
     let stdErr = '';
