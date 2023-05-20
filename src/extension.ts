@@ -137,6 +137,12 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
         `${image.name}:${image.tag}`,
         `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`
       ]);
+      const tagOutput = await execPodman([
+        'image',
+        'tag',
+        `${image.name}:${image.tag}`,
+        `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`
+      ]);
       progress.report({increment: 100});
     } catch (err) {
       pushError = err;
