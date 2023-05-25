@@ -145,7 +145,7 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
   if (pushError) {
     await extensionApi.window.showErrorMessage(`An error occurred while pushing the image'${image.name}:${image.tag}' to Developer Sandbox cluster'${targetSb}'.${pushError}`);
   } else {
-    await extensionApi.window.showInformationMessage(`The image successfully pushed to to Developer Sandbox cluster. '${targetSb}'`);
+    await extensionApi.window.showInformationMessage(`The image successfully pushed to to Developer Sandbox cluster '${targetSb}'.`);
   }
 } 
 
