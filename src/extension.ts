@@ -18,8 +18,9 @@
 
 import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
-import got from 'got';
+import { getOptions } from './proxy-options';
 import * as kubeconfig from './kubeconfig';
+import { got } from 'got'
 import { execPodman } from './podman-cli';
 
 const ProvideDisplayName = 'Developer Sandbox'
@@ -44,10 +45,9 @@ let updateConnectionTimeout: NodeJS.Timeout;
 let registeredConnections: Map<string, ConnectionData> = new Map<string, ConnectionData>();
 
 async function whoami(clusterUrl: string, token: string): Promise<string> {
-   const gotOptions = {
-    headers: { 
-        Authorization: `Bearer ${token}`
-    }
+  const gotOptions = getOptions();
+  gotOptions.headers ={ 
+    Authorization: `Bearer ${token}`
   };
 
   const username: string = await got(
@@ -68,10 +68,9 @@ async function getOpenShiftInternalRegistryPublicHost(contextName: string): Prom
   const context = config.getContextObject(contextName);
   const cluster = config.getCluster(context.cluster);
   const user = config.getUser(context.user);
-  const gotOptions = {
-    headers: { 
-        Authorization: `Bearer ${user.token}`
-    }
+  const gotOptions = getOptions();
+  gotOptions.headers = { 
+    Authorization: `Bearer ${user.token}`
   };
   const publicRegistry:string = await got(
     `${cluster.server}/apis/image.openshift.io/v1/namespaces/openshift/imagestreams`,
