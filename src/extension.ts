@@ -22,7 +22,7 @@ import got from 'got';
 import * as kubeconfig from './kubeconfig';
 import { execPodman } from './podman-cli';
 
-const ProvideDisplayName = 'Developer Sandbox'
+const ProvideDisplayName = 'Developer Sandbox';
 
 interface ConnectionData {
   disposable?: extensionApi.Disposable;
@@ -44,16 +44,13 @@ let updateConnectionTimeout: NodeJS.Timeout;
 let registeredConnections: Map<string, ConnectionData> = new Map<string, ConnectionData>();
 
 async function whoami(clusterUrl: string, token: string): Promise<string> {
-   const gotOptions = {
-    headers: { 
-        Authorization: `Bearer ${token}`
-    }
+  const gotOptions = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   };
 
-  const username: string = await got(
-    `${clusterUrl}/apis/user.openshift.io/v1/users/~`,
-    gotOptions
-  ).then((response) => {
+  const username: string = await got(`${clusterUrl}/apis/user.openshift.io/v1/users/~`, gotOptions).then(response => {
     if (response.statusCode === 200) {
       const responseObj = JSON.parse(response.body);
       return responseObj.metadata.name;
@@ -69,18 +66,18 @@ async function getOpenShiftInternalRegistryPublicHost(contextName: string): Prom
   const cluster = config.getCluster(context.cluster);
   const user = config.getUser(context.user);
   const gotOptions = {
-    headers: { 
-        Authorization: `Bearer ${user.token}`
-    }
+    headers: {
+      Authorization: `Bearer ${user.token}`,
+    },
   };
-  const publicRegistry:string = await got(
+  const publicRegistry: string = await got(
     `${cluster.server}/apis/image.openshift.io/v1/namespaces/openshift/imagestreams`,
-    gotOptions
-  ).then((response) => {
+    gotOptions,
+  ).then(response => {
     if (response.statusCode === 200) {
       const responseObj = JSON.parse(response.body);
       if (responseObj.items.length) {
-        return responseObj.items[0].status.publicDockerImageRepository
+        return responseObj.items[0].status.publicDockerImageRepository;
       }
     }
     throw new Error('Could not detect internal Developer Sandbox image registry.');
@@ -99,9 +96,13 @@ async function getOpenShiftInternalRegistryPublicHost(contextName: string): Prom
 type ImageInfo = { engineId: string; name?: string; tag?: string };
 
 export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<void> {
-  const qp = Array.from(registeredConnections.values()).filter(connection => connection.status === 'started').map(connection => connection.connection.name);
+  const qp = Array.from(registeredConnections.values())
+    .filter(connection => connection.status === 'started')
+    .map(connection => connection.connection.name);
   if (!qp.length) {
-    extensionApi.window.showInformationMessage('You have no running Developer Sandbox connections. Please create new one and try again.');
+    extensionApi.window.showInformationMessage(
+      'You have no running Developer Sandbox connections. Please create new one and try again.',
+    );
     return;
   }
   let targetSb: string;
@@ -113,41 +114,51 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
   } else {
     targetSb = qp[0];
   }
-  let pushError:any;
-  await extensionApi.window.withProgress({location: extensionApi.ProgressLocation.TASK_WIDGET, title: `Pushing image '${image.name}:${image.tag}' to Developer Sandbox '${targetSb}'`}, async (progress, token) => {
-    try {
-      progress.report({increment: 25});
-      const registryInfo = await getOpenShiftInternalRegistryPublicHost(targetSb);
-      progress.report({increment: 50});
-      const loginOutput = await execPodman([
-        'login', 
-        '-u', 
-        registryInfo.username,
-        '-p',
-        registryInfo.token,
-        registryInfo.host,
-      ]);
-      progress.report({increment: 75});
-      const lastIndexOfSlash = image.name.lastIndexOf('/');
-      const imageShortName = lastIndexOfSlash !== -1 ? image.name.substring(lastIndexOfSlash+1) : image.name;
-      const imageTagSuffix = image.tag ? `:${image.tag}` : ``;
-      const pushOutput = await execPodman([
-        'image',
-        'push',
-        `${image.name}:${image.tag}`,
-        `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`
-      ]);
-      progress.report({increment: 100});
-    } catch (err) {
-      pushError = err;
-    }
-  });
+  let pushError: any;
+  await extensionApi.window.withProgress(
+    {
+      location: extensionApi.ProgressLocation.TASK_WIDGET,
+      title: `Pushing image '${image.name}:${image.tag}' to Developer Sandbox '${targetSb}'`,
+    },
+    async (progress, token) => {
+      try {
+        progress.report({ increment: 25 });
+        const registryInfo = await getOpenShiftInternalRegistryPublicHost(targetSb);
+        progress.report({ increment: 50 });
+        const loginOutput = await execPodman([
+          'login',
+          '-u',
+          registryInfo.username,
+          '-p',
+          registryInfo.token,
+          registryInfo.host,
+        ]);
+        progress.report({ increment: 75 });
+        const lastIndexOfSlash = image.name.lastIndexOf('/');
+        const imageShortName = lastIndexOfSlash !== -1 ? image.name.substring(lastIndexOfSlash + 1) : image.name;
+        const imageTagSuffix = image.tag ? `:${image.tag}` : ``;
+        const pushOutput = await execPodman([
+          'image',
+          'push',
+          `${image.name}:${image.tag}`,
+          `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`,
+        ]);
+        progress.report({ increment: 100 });
+      } catch (err) {
+        pushError = err;
+      }
+    },
+  );
   if (pushError) {
-    await extensionApi.window.showErrorMessage(`An error occurred while pushing the image'${image.name}:${image.tag}' to Developer Sandbox cluster'${targetSb}'.${pushError}`);
+    await extensionApi.window.showErrorMessage(
+      `An error occurred while pushing the image'${image.name}:${image.tag}' to Developer Sandbox cluster'${targetSb}'.${pushError}`,
+    );
   } else {
-    await extensionApi.window.showInformationMessage(`The image successfully pushed to to Developer Sandbox cluster '${targetSb}'.`);
+    await extensionApi.window.showInformationMessage(
+      `The image successfully pushed to to Developer Sandbox cluster '${targetSb}'.`,
+    );
   }
-} 
+}
 
 async function deleteContext(contextName: string): Promise<void> {
   const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
@@ -171,21 +182,22 @@ async function deleteConnectionAndUpdateKubeconfig(contextName: string): Promise
   deleteContext(contextName);
 }
 
-async function registerConnection(contextName:string, apiURL:string, token:string): Promise<ConnectionData> {
+async function registerConnection(contextName: string, apiURL: string, token: string): Promise<ConnectionData> {
   // check if cluster is accessible
   // const status = await getConnectionStatus(apiURL, token);
   const connection = {
     name: contextName,
-    status: () => registeredConnections.get(contextName).status, 
+    status: () => registeredConnections.get(contextName).status,
     endpoint: {
-      apiURL
-    }, lifecycle: {
-      delete: async () => { 
-        return deleteConnectionAndUpdateKubeconfig(contextName)
-      }
-    }
+      apiURL,
+    },
+    lifecycle: {
+      delete: async () => {
+        return deleteConnectionAndUpdateKubeconfig(contextName);
+      },
+    },
   };
-  const connectionData:ConnectionData = { connection, status: UnknownStatus };
+  const connectionData: ConnectionData = { connection, status: UnknownStatus };
   registeredConnections.set(contextName, connectionData);
   connectionData.disposable = provider.registerKubernetesProviderConnection(connection);
   return connectionData;
@@ -206,13 +218,14 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       logo: {
         dark: icon,
         light: icon,
-      }
+      },
     },
-    emptyConnectionMarkdownDescription: 'A free, private OpenShift environment including one project and a resource quota of 14 GB RAM, and 40 GB storage. It lasts 30 days.\n\nSign up at [https://developers.redhat.com/developer-sandbox](https://developers.redhat.com/developer-sandbox/?sc_cid=7013a000003SUmgAAG).',
+    emptyConnectionMarkdownDescription:
+      'A free, private OpenShift environment including one project and a resource quota of 14 GB RAM, and 40 GB storage. It lasts 30 days.\n\nSign up at [https://developers.redhat.com/developer-sandbox](https://developers.redhat.com/developer-sandbox/?sc_cid=7013a000003SUmgAAG).',
   };
 
   provider = extensionApi.provider.createProvider(providerOptions);
-  
+
   const LoginCommandParam = 'redhat.sandbox.login.command';
   const ContextNameParam = 'redhat.sandbox.context.name';
 
@@ -222,8 +235,11 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
   const disposable = provider.setKubernetesProviderConnectionFactory({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    create: async (params: { [key: string]: any }, _logger?: extensionApi.Logger, _token?: extensionApi.CancellationToken) => {
-
+    create: async (
+      params: { [key: string]: any },
+      _logger?: extensionApi.Logger,
+      _token?: extensionApi.CancellationToken,
+    ) => {
       // check if context name is provided
       if (!params[ContextNameParam]) {
         throw new Error('Context name is required.');
@@ -237,8 +253,8 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
       const apiURLMatch = loginCommand.match(/--server=([^\s]*)/);
       const tokenMatch = loginCommand.match(/--token=([^\s]*)/);
-      
-      if (!apiURLMatch || !tokenMatch ) {
+
+      if (!apiURLMatch || !tokenMatch) {
         throw new Error('Login command is invalid or missing required options --server and --token.');
       }
 
@@ -247,14 +263,14 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
       // add cluster to kubeconfig
       const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
-     
+
       if (config['contexts'].find(context => context['name'] === params[ContextNameParam])) {
         throw new Error(`Context ${params[ContextNameParam]} already exists, please choose a different name.`);
       }
 
       const suffix = Math.random().toString(36).substring(7);
 
-      const clusterName = `sandbox-cluster-${suffix}`;  // has unique name
+      const clusterName = `sandbox-cluster-${suffix}`; // has unique name
       const userName = `sandbox-user-${suffix}`; // generate a unique name for the user
       const username: string = await whoami(apiURL, token);
 
@@ -284,8 +300,8 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
   extensionContext.subscriptions.push(
     extensionApi.commands.registerCommand('sandbox.image.push.to.cluster', image => {
       pushImageToOpenShiftRegistry(image);
-    }
-  ));
+    }),
+  );
 
   extensionContext.subscriptions.push(provider);
   extensionContext.subscriptions.push(disposable);
@@ -294,7 +310,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
 function updateConnectionsPeriodically(): void {
   updateConnections().then(() => {
-    updateConnectionTimeout = setTimeout(updateConnectionsPeriodically,2000);
+    updateConnectionTimeout = setTimeout(updateConnectionsPeriodically, 2000);
   });
 }
 
@@ -302,11 +318,11 @@ export function deactivate(): void {
   console.log('deactivating extension openshift-sandbox');
   if (updateConnectionTimeout) {
     clearTimeout(updateConnectionTimeout);
-  } 
+  }
 }
 
 async function updateConnections(): Promise<void> {
-  let config:KubeConfig;
+  let config: KubeConfig;
   let attempts = 0;
   while (attempts < 5) {
     try {
@@ -326,49 +342,55 @@ async function updateConnections(): Promise<void> {
   }
 
   // delete connections that are not in kubeconfig anymore
-  const deletedConnections = Array.from(registeredConnections.keys()) 
-    .filter((contextName) => !config.getContexts().find(context => context.name === contextName));
+  const deletedConnections = Array.from(registeredConnections.keys()).filter(
+    contextName => !config.getContexts().find(context => context.name === contextName),
+  );
   deletedConnections.forEach(contextName => {
     const deletedConnection = registeredConnections.get(contextName);
     deleteConnection(contextName);
     deletedConnection.disposable.dispose();
   });
 
-  // update status of existin connections 
-  const updateStatusRequests = Array.from(registeredConnections.keys()).map((contextName) => {
+  // update status of existin connections
+  const updateStatusRequests = Array.from(registeredConnections.keys()).map(contextName => {
     // get current token from config file
     const token = config.getUser(config.getContextObject(contextName).user).token;
     const connectionData = registeredConnections.get(contextName);
-    return getConnectionStatus(connectionData.connection.endpoint.apiURL, token).then((status) => {
+    return getConnectionStatus(connectionData.connection.endpoint.apiURL, token).then(status => {
       connectionData.status = status;
     });
   });
 
   // what if connection is not responding?
   await Promise.all(updateStatusRequests);
-  
+
   // add connections that are in kubeconfig but not registered
-  const addedSandboxContexts = config.getContexts()
-    .filter((context) => context.cluster.startsWith('sandbox-cluster-'))
-    .filter((context) => !registeredConnections.get(context.name));
-  await Promise.all(addedSandboxContexts.map(context => {
-    const cluster = config.getCluster(context.cluster);
-    return registerConnection(context.name, cluster.server, config.getUser(context.user).token);
-  }));
+  const addedSandboxContexts = config
+    .getContexts()
+    .filter(context => context.cluster.startsWith('sandbox-cluster-'))
+    .filter(context => !registeredConnections.get(context.name));
+  await Promise.all(
+    addedSandboxContexts.map(context => {
+      const cluster = config.getCluster(context.cluster);
+      return registerConnection(context.name, cluster.server, config.getUser(context.user).token);
+    }),
+  );
 }
 
-async function getConnectionStatus(apiURL: string, token: string) : Promise<extensionApi.ProviderConnectionStatus> {
-  return isTokenValid(apiURL, token).then(() => {
-    return StartedStatus;
-  }).catch((error) => {
-    console.error('Failed to connect to cluster:', error);
-    return UnknownStatus;
-  });
+async function getConnectionStatus(apiURL: string, token: string): Promise<extensionApi.ProviderConnectionStatus> {
+  return isTokenValid(apiURL, token)
+    .then(() => {
+      return StartedStatus;
+    })
+    .catch(error => {
+      console.error('Failed to connect to cluster:', error);
+      return UnknownStatus;
+    });
 }
 
 async function isTokenValid(apiURL: string, token: string): Promise<void> {
   const usersApiURL = `${apiURL}/apis/user.openshift.io/v1/users/~`;
-  return got(usersApiURL, { headers: { Authorization: `Bearer ${token}`}}).then((response) => {
+  return got(usersApiURL, { headers: { Authorization: `Bearer ${token}` } }).then(response => {
     if (response.statusCode === 200) {
       const responseObj = JSON.parse(response.body);
       if (responseObj.kind === 'User') {

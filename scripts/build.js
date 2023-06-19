@@ -42,19 +42,22 @@ if (fs.existsSync(builtinDirectory)) {
   fs.rmSync(builtinDirectory, { recursive: true, force: true });
 }
 
-byline(fileStream).on('data', (line) => {
+byline(fileStream)
+  .on('data', line => {
     includedFiles.push(line);
-}).on('error', () => {
-  throw new Error('Error reading .extfiles');
-}).on('end', () => {
-  includedFiles.push(zipDirectory);
-  mkdirp.sync(zipDirectory);
-  console.log(`Copying files to ${zipDirectory}`);
-  cp(includedFiles, (error) => { 
-    if (error) {
-      throw new Error('Error copying files', error);
-    }
-    console.log(`Zipping files to ${destFile}`);
-    zipper.sync.zip(zipDirectory).compress().save(destFile);
+  })
+  .on('error', () => {
+    throw new Error('Error reading .extfiles');
+  })
+  .on('end', () => {
+    includedFiles.push(zipDirectory);
+    mkdirp.sync(zipDirectory);
+    console.log(`Copying files to ${zipDirectory}`);
+    cp(includedFiles, error => {
+      if (error) {
+        throw new Error('Error copying files', error);
+      }
+      console.log(`Zipping files to ${destFile}`);
+      zipper.sync.zip(zipDirectory).compress().save(destFile);
+    });
   });
-});
