@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-import { KubeConfig } from '@kubernetes/client-node'
+import { KubeConfig } from '@kubernetes/client-node';
 import * as fs from 'fs-extra';
 import * as jsYaml from 'js-yaml';
 
@@ -24,7 +24,7 @@ export function createOrLoadFromFile(configFile: string): KubeConfig {
   let config = new KubeConfig();
 
   if (fs.existsSync(configFile)) {
-   config.loadFromFile(configFile);
+    config.loadFromFile(configFile);
   }
   return config;
 }
@@ -33,7 +33,8 @@ export function exportToFile(kubeconfig: KubeConfig, configLocation: string): vo
   const configContents = JSON.parse(kubeconfig.exportConfig());
   fs.ensureFileSync(configLocation);
   fs.writeFileSync(
-    configLocation, jsYaml.dump(configContents, { noArrayIndent: true, quotingType: '"', lineWidth: -1 }),
+    configLocation,
+    jsYaml.dump(configContents, { noArrayIndent: true, quotingType: '"', lineWidth: -1 }),
     'utf-8',
   );
 }

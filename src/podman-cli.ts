@@ -27,7 +27,7 @@ const macosExtraPath = '/usr/local/bin:/opt/homebrew/bin:/opt/local/bin:/opt/pod
 const platform = getPlatform();
 
 export function isWindows(): boolean {
-  return platform  === 'win32';
+  return platform === 'win32';
 }
 
 export function isMac(): boolean {
@@ -35,7 +35,7 @@ export function isMac(): boolean {
 }
 
 export function isLinux(): boolean {
-  return  platform === 'linux';
+  return platform === 'linux';
 }
 
 export function getInstallationPath(): string {
@@ -100,11 +100,8 @@ export interface ExecOptions {
   env?: NodeJS.ProcessEnv;
 }
 
-export const execPodman = (
-  args?: string[],
-  options?: ExecOptions,
-  token?: CancellationToken,
-) => execPromise(getPodmanCli(), args, options, token);
+export const execPodman = (args?: string[], options?: ExecOptions, token?: CancellationToken) =>
+  execPromise(getPodmanCli(), args, options, token);
 
 function execPromise(
   command: string,
