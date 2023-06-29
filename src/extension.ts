@@ -138,16 +138,25 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
           );
         }
         progress.report({ increment: 75 });
-        await extensionApi.containerEngine.pushImage(
-          image.engineId,
-          remoteImageName,
-          (name, data) => {
-            if (name === 'data') {
-              progress.report({ message: data });
-            }
-          },
-          { username: registryInfo.username, password: registryInfo.token, serveraddress: registryInfo.host },
-        );
+        await new Promise(async (resolve, reject) => {
+          try {
+            await extensionApi.containerEngine.pushImage(
+              image.engineId,
+              remoteImageName,
+              (name, data) => {
+                if (name === 'data') {
+                  progress.report({ message: data });
+                }
+                if (name === 'end') {
+                  resolve(undefined);
+                }
+              },
+              { username: registryInfo.username, password: registryInfo.token, serveraddress: registryInfo.host },
+            );
+          } catch (err: unknown) {
+            reject(err);
+          }
+        });
         progress.report({ increment: 100 });
         if (localImageName !== remoteImageName) {
           await extensionApi.window.showInformationMessage(
