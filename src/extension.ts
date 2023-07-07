@@ -151,7 +151,7 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
                   resolve(undefined);
                 }
               },
-              { username: registryInfo.username, password: registryInfo.token, serveraddress: registryInfo.host },
+              { password: registryInfo.token, username: registryInfo.username, serveraddress: registryInfo.host },
             );
           } catch (err: unknown) {
             reject(err);
@@ -160,16 +160,16 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
         progress.report({ increment: 100 });
         if (localImageName !== remoteImageName) {
           await extensionApi.window.showInformationMessage(
-            `The image '${image.name}:${image.tag}' has been successfully pushed to to Developer Sandbox cluster. '${targetSb}'. A new tag '${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}' has been created for this image; you must use this image tag when deploying to Developer Sandbox`,
+            `The image '${image.name}:${image.tag}' has been successfully pushed to to Developer Sandbox cluster '${targetSb}'. A new tag '${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}' has been created for this image; you must use this image tag when deploying to Developer Sandbox`,
           );
         } else {
           await extensionApi.window.showInformationMessage(
-            `The image '${image.name}:${image.tag}' has been successfully pushed to to Developer Sandbox cluster. '${targetSb}'.`,
+            `The image '${image.name}:${image.tag}' has been successfully pushed to to Developer Sandbox cluster '${targetSb}'.`,
           );
         }
       } catch (err) {
         await extensionApi.window.showErrorMessage(
-          `An error occurred while pushing the image '${image.name}:${image.tag}' to Developer Sandbox cluster'${targetSb}'.${pushError}`,
+          `An error occurred while pushing the image '${image.name}:${image.tag}' to Developer Sandbox cluster' ${targetSb}'.${err}`,
         );
       }
     },
