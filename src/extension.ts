@@ -156,8 +156,16 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
               // Upgrading docker-modem to required version leads to segfaut during the build
               // { username: registryInfo.username, password: registryInfo.token, serveraddress: registryInfo.host },
 
-              // Manual encoding required to avoid image push error for 
-              { base64: base64url(JSON.stringify({ username: registryInfo.username, password: registryInfo.token, serveraddress: registryInfo.host }))} as any as extensionApi.AuthConfig,
+              // Manual encoding required to avoid image push error for
+              {
+                base64: base64url(
+                  JSON.stringify({
+                    username: registryInfo.username,
+                    password: registryInfo.token,
+                    serveraddress: registryInfo.host,
+                  }),
+                ),
+              } as any as extensionApi.AuthConfig,
             );
           } catch (err: unknown) {
             reject(err);
