@@ -18,6 +18,7 @@
 
 import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
+import base64url from 'base64url';
 import got from 'got';
 import * as kubeconfig from './kubeconfig';
 
@@ -151,7 +152,12 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
                   resolve(undefined);
                 }
               },
-              { password: registryInfo.token, username: registryInfo.username, serveraddress: registryInfo.host },
+              // To work correctly docker-modem >v3.0.3 should be used to encode auth config using base64url
+              // Upgrading docker-modem to required version leads to segfaut during the build
+              // { username: registryInfo.username, password: registryInfo.token, serveraddress: registryInfo.host },
+
+              // Manual encoding required to avoid image push error for 
+              { base64: base64url(JSON.stringify({ username: registryInfo.username, password: registryInfo.token, serveraddress: registryInfo.host }))} as any as extensionApi.AuthConfig,
             );
           } catch (err: unknown) {
             reject(err);
