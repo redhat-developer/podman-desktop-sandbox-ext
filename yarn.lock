@@ -149,9 +149,9 @@
     openid-client "^5.3.0"
 
 "@podman-desktop/api@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@podman-desktop/api/-/api-1.1.0.tgz#b1f6441cf68cda03bce1030ef9622168b397a50a"
-  integrity sha512-hwoPZjLkT1fIMG2IXkTSwK1Xnl381/YfM0vEQHXsT2pA36j8MiloOn4PeoCynk+wZPO5jLJUccOS7WFrqC5xeg==
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@podman-desktop/api/-/api-1.2.0.tgz#45bad164c176006f335be0ff265762d48202f23e"
+  integrity sha512-kTMGuSpGjSesQg8qw/fya9dCm6Tk9/X7nfEERPXNw0J+5UMwlsmvgB/zf1/jvzwQRfeFxI/l6QxhS0BXPb0fkA==
 
 "@sindresorhus/is@^5.2.0":
   version "5.3.0"
@@ -285,11 +285,6 @@ balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
-
-base64url@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/base64url/-/base64url-3.0.1.tgz#6399d572e2bc3f90a9a8b22d5dbb0a32d33f788d"
-  integrity sha512-ir1UPr3dkwexU7FdV8qBBbNDRUhMmIekYMFZfi+C/sLNnRESKPl23nB9b2pltqfOQNnGzsDdId90AEtG5tCx4A==
 
 bcrypt-pbkdf@^1.0.0:
   version "1.0.2"

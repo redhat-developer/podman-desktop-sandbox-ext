@@ -51,7 +51,6 @@
   "dependencies": {
     "@kubernetes/client-node": "^0.18.1",
     "@podman-desktop/api": "^1.1.0",
-    "base64url": "^3.0.1",
     "fs-extra": "^10.1.0",
     "got": "^12.6.0",
     "js-yaml": "^4.1.0"
