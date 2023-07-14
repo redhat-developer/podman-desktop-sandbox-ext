@@ -148,7 +148,7 @@
   optionalDependencies:
     openid-client "^5.3.0"
 
-"@podman-desktop/api@^1.1.0":
+"@podman-desktop/api@^1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@podman-desktop/api/-/api-1.2.0.tgz#45bad164c176006f335be0ff265762d48202f23e"
   integrity sha512-kTMGuSpGjSesQg8qw/fya9dCm6Tk9/X7nfEERPXNw0J+5UMwlsmvgB/zf1/jvzwQRfeFxI/l6QxhS0BXPb0fkA==
