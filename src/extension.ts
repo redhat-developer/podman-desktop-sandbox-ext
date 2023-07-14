@@ -20,7 +20,6 @@ import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig';
-import { execPodman } from './podman-cli';
 
 const ProvideDisplayName = 'Developer Sandbox';
 
@@ -125,39 +124,56 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
         progress.report({ increment: 25 });
         const registryInfo = await getOpenShiftInternalRegistryPublicHost(targetSb);
         progress.report({ increment: 50 });
-        const loginOutput = await execPodman([
-          'login',
-          '-u',
-          registryInfo.username,
-          '-p',
-          registryInfo.token,
-          registryInfo.host,
-        ]);
-        progress.report({ increment: 75 });
         const lastIndexOfSlash = image.name.lastIndexOf('/');
         const imageShortName = lastIndexOfSlash !== -1 ? image.name.substring(lastIndexOfSlash + 1) : image.name;
         const imageTagSuffix = image.tag ? `:${image.tag}` : ``;
-        const pushOutput = await execPodman([
-          'image',
-          'push',
-          `${image.name}:${image.tag}`,
-          `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`,
-        ]);
+        const localImageName = `${image.name}${imageTagSuffix}`;
+        const remoteImageName = `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`;
+        if (localImageName !== remoteImageName) {
+          await extensionApi.containerEngine.tagImage(
+            image.engineId,
+            image.name + imageTagSuffix,
+            `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}`,
+            image.tag,
+          );
+        }
+        progress.report({ increment: 75 });
+        await new Promise(async (resolve, reject) => {
+          try {
+            await extensionApi.containerEngine.pushImage(
+              image.engineId,
+              remoteImageName,
+              (name, data) => {
+                if (name === 'data') {
+                  progress.report({ message: data });
+                }
+                if (name === 'end') {
+                  resolve(undefined);
+                }
+              },
+              { username: registryInfo.username, password: registryInfo.token, serveraddress: registryInfo.host },
+            );
+          } catch (err: unknown) {
+            reject(err);
+          }
+        });
         progress.report({ increment: 100 });
+        if (localImageName !== remoteImageName) {
+          await extensionApi.window.showInformationMessage(
+            `The image '${image.name}:${image.tag}' has been successfully pushed to to Developer Sandbox cluster '${targetSb}'. A new tag '${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}' has been created for this image; you must use this image tag when deploying to Developer Sandbox`,
+          );
+        } else {
+          await extensionApi.window.showInformationMessage(
+            `The image '${image.name}:${image.tag}' has been successfully pushed to to Developer Sandbox cluster '${targetSb}'.`,
+          );
+        }
       } catch (err) {
-        pushError = err;
+        await extensionApi.window.showErrorMessage(
+          `An error occurred while pushing the image '${image.name}:${image.tag}' to Developer Sandbox cluster '${targetSb}'. ${err}`,
+        );
       }
     },
   );
-  if (pushError) {
-    await extensionApi.window.showErrorMessage(
-      `An error occurred while pushing the image'${image.name}:${image.tag}' to Developer Sandbox cluster'${targetSb}'.${pushError}`,
-    );
-  } else {
-    await extensionApi.window.showInformationMessage(
-      `The image successfully pushed to to Developer Sandbox cluster '${targetSb}'.`,
-    );
-  }
 }
 
 async function deleteContext(contextName: string): Promise<void> {
