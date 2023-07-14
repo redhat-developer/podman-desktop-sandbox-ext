@@ -169,7 +169,7 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
         }
       } catch (err) {
         await extensionApi.window.showErrorMessage(
-          `An error occurred while pushing the image '${image.name}:${image.tag}' to Developer Sandbox cluster' ${targetSb}'.${err}`,
+          `An error occurred while pushing the image '${image.name}:${image.tag}' to Developer Sandbox cluster '${targetSb}'. ${err}`,
         );
       }
     },
