@@ -25,6 +25,12 @@
           "scope": "KubernetesProviderConnectionFactory",
           "description": "Context name for Developer Sandbox to easily find it in your Kubernetes contexts"
         },
+        "redhat.sandbox.context.default": {
+          "type": "boolean",
+          "default": false,
+          "scope": "KubernetesProviderConnectionFactory",
+          "description": "Set as current context"
+        },
         "redhat.sandbox.login.command": {
           "type": "string",
           "default": "",

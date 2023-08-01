@@ -244,6 +244,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
   const LoginCommandParam = 'redhat.sandbox.login.command';
   const ContextNameParam = 'redhat.sandbox.context.name';
+  const DefaultContextParam = 'redhat.sandbox.context.default';
 
   const kubeconfigUri = extensionApi.kubernetes.getKubeconfig();
   const kubeconfigFile = kubeconfigUri.fsPath;
@@ -305,6 +306,11 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
         name: params[ContextNameParam],
         namespace: `${username}-dev`,
       });
+
+      console.log('Default context =>', params[DefaultContextParam]);
+      if (params[DefaultContextParam] === 'on') {
+        config.setCurrentContext(params[ContextNameParam]);
+      }
 
       kubeconfig.exportToFile(config, kubeconfigFile);
 
