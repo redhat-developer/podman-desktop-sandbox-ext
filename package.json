@@ -24,7 +24,7 @@
           "default": "",
           "scope": "KubernetesProviderConnectionFactory",
           "description": "Context name for Developer Sandbox to easily find it in your Kubernetes contexts",
-          "placeholder": "Context name example: my-dev-sandbox"
+          "placeholder": "my-dev-sandbox"
         },
         "redhat.sandbox.context.default": {
           "type": "boolean",
@@ -37,7 +37,7 @@
           "default": "",
           "scope": "KubernetesProviderConnectionFactory",
           "description": "Login command from Developer Console",
-          "placeholder": "Command example: oc login --token=<token> --server=<url>"
+          "placeholder": "oc login --token=<token> --server=<url>"
         }
       }
     },
