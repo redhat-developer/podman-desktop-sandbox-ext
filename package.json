@@ -21,7 +21,7 @@
         },
         "redhat.sandbox.context.name": {
           "type": "string",
-          "default": "",
+          "default": "dev-sandbox-context",
           "scope": "KubernetesProviderConnectionFactory",
           "description": "Context name for Developer Sandbox to easily find it in your Kubernetes contexts",
           "placeholder": "my-dev-sandbox"
