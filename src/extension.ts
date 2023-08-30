@@ -23,6 +23,8 @@ import * as kubeconfig from './kubeconfig';
 
 const ProvideDisplayName = 'Developer Sandbox';
 
+const TelemetryLogger = extensionApi.env.createTelemetryLogger();
+
 interface ConnectionData {
   disposable?: extensionApi.Disposable;
   connection: extensionApi.KubernetesProviderConnection;
@@ -240,6 +242,12 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       'A free, private OpenShift environment including one project and a resource quota of 14 GB RAM, and 40 GB storage. It lasts 30 days.\n\nSign up at [https://developers.redhat.com/developer-sandbox](https://developers.redhat.com/developer-sandbox/?sc_cid=7013a000003SUmgAAG).',
   };
 
+  extensionApi.commands.registerCommand('sandbox.open.login.url', () => {
+    extensionApi.env.openExternal(extensionApi.Uri.parse('https://developers.redhat.com/developer-sandbox/?sc_cid=7013a000003SUmgAAG')).then(successful => {
+      TelemetryLogger.logUsage('sandboxOpenLoginUrlRequest', { successful });
+    });
+  });
+  
   provider = extensionApi.provider.createProvider(providerOptions);
 
   const LoginCommandParam = 'redhat.sandbox.login.command';

@@ -17,7 +17,7 @@
         "redhat.sandbox.form.description": {
           "type": "markdown",
           "scope": "KubernetesProviderConnectionFactory",
-          "markdownDescription": "You will need to log into your Developer Sandbox in an external browser:\n\n:button[Log into Developer Sandbox]{href=\"https://developers.redhat.com/developer-sandbox/?sc_cid=7013a000003SUmgAAG\" title=Login into Developer Sandbox in an external browser}\n\nFrom your Developer Sandbox Console, click on your login name in the upper right corner and select 'Copy login command' from the menu. Copy full login command from browser page and paste it in the 'Login command' field below."
+          "markdownDescription": "You will need to log into your Developer Sandbox in an external browser:\n\n:button[Log into Developer Sandbox]{command=sandbox.open.login.url}\n\nFrom your Developer Sandbox Console, click on your login name in the upper right corner and select 'Copy login command' from the menu. Copy full login command from browser page and paste it in the 'Login command' field below."
         },
         "redhat.sandbox.context.name": {
           "type": "string",
@@ -41,6 +41,12 @@
         }
       }
     },
+    "commands": [
+      {
+        "command": "sandbox.open.login.url",
+        "title": "Log into Developer Sandbox"
+      }
+    ],
     "menus": {
       "dashboard/image": [
         {
