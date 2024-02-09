@@ -2,7 +2,7 @@
   "name": "redhat-sandbox",
   "displayName": "Red Hat OpenShift Sandbox",
   "description": "Sign up and provisioning for OpenShift Sandbox",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "icon": "icon.png",
   "publisher": "redhat",
   "license": "Apache-2.0",
