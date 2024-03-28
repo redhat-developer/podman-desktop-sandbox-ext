@@ -251,7 +251,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
         .then(successful => {
           TelemetryLogger.logUsage('sandboxOpenLoginUrlRequest', { successful });
         });
-    })
+    }),
   );
 
   provider = extensionApi.provider.createProvider(providerOptions);
