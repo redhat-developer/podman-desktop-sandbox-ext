@@ -35,6 +35,7 @@ interface InternalRegistryInfo {
   host: string;
   username: string;
   token: string;
+  namespace?: string;
 }
 
 const StartedStatus: extensionApi.ProviderConnectionStatus = 'started';
@@ -48,6 +49,9 @@ async function whoami(clusterUrl: string, token: string): Promise<string> {
   const gotOptions = {
     headers: {
       Authorization: `Bearer ${token}`,
+    },
+    https: {
+      rejectUnauthorized: false,
     },
   };
 
@@ -64,11 +68,15 @@ async function whoami(clusterUrl: string, token: string): Promise<string> {
 async function getOpenShiftInternalRegistryPublicHost(contextName: string): Promise<InternalRegistryInfo> {
   const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
   const context = config.getContextObject(contextName);
+  const namespace = context.namespace;
   const cluster = config.getCluster(context.cluster);
   const user = config.getUser(context.user);
   const gotOptions = {
     headers: {
       Authorization: `Bearer ${user.token}`,
+    },
+    https: {
+      rejectUnauthorized: false,
     },
   };
   const publicRegistry: string = await got(
@@ -90,6 +98,7 @@ async function getOpenShiftInternalRegistryPublicHost(contextName: string): Prom
   return {
     host,
     username,
+    namespace,
     token: user.token,
   };
 }
@@ -101,10 +110,18 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
     .filter(connection => connection.status === 'started')
     .map(connection => connection.connection.name);
   if (!qp.length) {
-    extensionApi.window.showInformationMessage(
-      'You have no running Developer Sandbox connections. Please create new one and try again.',
+    // try to use crc contexts
+    const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
+    const crcContexts = config.contexts.filter(context =>
+      config.getCluster(context.cluster).server.startsWith(`https://api.crc.testing`),
     );
-    return;
+    if (crcContexts.length === 0) {
+      extensionApi.window.showInformationMessage(
+        'You have no running Developer Sandbox connections. Please create new one and try again.',
+      );
+      return;
+    }
+    crcContexts.forEach(ct => qp.push(ct.name));
   }
   let targetSb: string;
   if (qp.length > 1) {
@@ -130,14 +147,25 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
         const imageShortName = lastIndexOfSlash !== -1 ? image.name.substring(lastIndexOfSlash + 1) : image.name;
         const imageTagSuffix = image.tag ? `:${image.tag}` : ``;
         const localImageName = `${image.name}${imageTagSuffix}`;
-        const remoteImageName = `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`;
+        const remoteImageName = registryInfo.namespace
+          ? `${registryInfo.host}/${registryInfo.namespace}/${imageShortName}${imageTagSuffix}`
+          : `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`;
         if (localImageName !== remoteImageName) {
-          await extensionApi.containerEngine.tagImage(
-            image.engineId,
-            image.name + imageTagSuffix,
-            `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}`,
-            image.tag,
-          );
+          if (registryInfo.namespace) {
+            await extensionApi.containerEngine.tagImage(
+              image.engineId,
+              image.name + imageTagSuffix,
+              `${registryInfo.host}/${registryInfo.namespace}/${imageShortName}`,
+              image.tag,
+            );
+          } else {
+            await extensionApi.containerEngine.tagImage(
+              image.engineId,
+              image.name + imageTagSuffix,
+              `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}`,
+              image.tag,
+            );
+          }
         }
         progress.report({ increment: 75 });
         await new Promise(async (resolve, reject) => {
