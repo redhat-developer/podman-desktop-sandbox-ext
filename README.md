@@ -58,8 +58,7 @@ You application is up an running
 
 You can install OpenShift Developer Sandbox Extension directly from Podman Desktop Extension page.
 
-
-
+![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/cdd674d5-9386-45f2-abdf-0f389a703c65)
 
 
 # Nightly Build Installation
