@@ -7,19 +7,19 @@ After few simple configuration steps the extension allows you to push an image t
 
 Once installed, you can find the Sandbox resource added to the Resources settings page.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/66387862-6f1d-4674-a19f-97510021ae15)
+![1-sandbox-in-resource-settings](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/133c684f-a09f-4aa4-8447-29e5700af51c)
 
 To configure kubernetes context for your Sandbox click on 'Create new ...' button to see Sandbox kubernetes context configuration form.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/e4094e32-fe84-4743-935e-0ba7b025d8d8)
+![2-new-sandbox-form-annotated](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/80e22375-7d69-43cb-ad06-4dd1dd1777ea)
 
 Follow the description on top of the form to copy a login command from Sandbox Developer Console to `Login command from Developer Console` field. Then set desired kubernetes context name in corresponding field and press `Create` button.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/3435d8c6-d405-4b18-a555-b30d080e30eb)
+![3-new-sandbox-form](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/fc1cb010-4f86-46c6-853f-428c73f4544e)
 
 There should be new Sandbox connection in 'running' state in Sandbox section after that.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/2c9d68bb-c4a4-4dcb-bc34-3abd215d502d)
+![4-sandbox-connection-created](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/45082f01-5cb7-4087-be31-d6ca8152f527)
 
 To deploy your first application on OpenShift. Create `Containerfile` shown below
 
@@ -34,58 +34,59 @@ LABEL org.opencontainers.image.title="Simple application with static content" \
 Open Podman Desktop 'Build image' page and point `Containerfile path` to Containerfile above. Put `httpd-demo`
 in `Image Name` field. Select `Intel and AMD x86_64` in platform section and press 'Build' button to build the image.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/a77bb9b2-bc70-43d4-885f-bada705acba9)
+![5-build-image](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/7ab6e96a-a5a4-4dde-991f-f9f372200e60)
 
 After build is done pres `Done` button to swithch to `Images` page.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/3f010889-198f-4863-8957-2e0dc811de6c)
+![6-build-image-result](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/40754e69-7f90-460d-92fb-dc4dcd1cea11)
 
 In the Images page find `httpd-demo` image and select item `Push to Developer Sandbox cluster` to tag image with
 Sandbox internal registry name and then push tagged image to the registry.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/45a156f7-da99-4891-a617-2443a41e816a)
+![7-push-image-to-sandbox](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/c2e2ada8-ca38-488d-b86e-1c1778a27d62)
 
 After successfuly pushing the image to internal Sandbox image registry an information message with explanation should apperar.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/1a516a4c-6ce9-4cd2-8108-64a080315c77)
+![8-push-image-to-sandbox-message](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/7d96552b-4f6e-4ffd-b7ae-64f46c87ff6e)
 
 Close the message and run the image mentioned in it using run button on the right side of the image item.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/692ca1c0-5b9b-4535-a2c7-e5fcdb066be5)
+![9-run-built-image](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/d3a694e7-5b41-4ed0-972d-2bdcf134e7f0)
 
 In `Create Container` leave all default values and press `Start Container` button.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/1d7f9376-d96d-4e44-910c-26b511e156c5)
+![10-container-successfully-started](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/2f85abd9-442e-477a-8c6f-641240c39526)
 
 After container sucessfully started it can be deployed to kubernetes.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/2869eda6-10dd-4ef3-90fa-43efa6570ca7)
+![11-run-built-image-form](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/b9b41027-3da4-45be-b77a-94f94c07a9a9)
 
 Make sure current kubernetes context is pointing to Sandbox and press `Deploy` button.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/a1d23ad8-5f7b-402e-84aa-1fad78431cd8)
+![12-deploy-container-to-kube-form](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/ead4d044-3ca1-4b44-943d-453f36fe8a63)
 
 After successful deployment application can be opened in browser.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/4f8d0609-69ab-4599-90f3-da7498ec7b49)
+![13-deploy-container-to-kube-result](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/b68f5c2c-348d-4615-b10b-c64167723bf7)
 
 The browser window should show default test page for the running HTTPD server.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/d2bd5ed5-cc91-4ab1-8528-bb492000b7cd)
+![14-httpd-test-image](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/1682f764-d722-43d9-a9ad-6278631c9d7a)
 
 # Installation
 
 You can install OpenShift Developer Sandbox Extension directly from Podman Desktop Extension page.
 
-![image](https://github.com/dgolovin/podman-desktop-sandbox-ext/assets/620330/cdd674d5-9386-45f2-abdf-0f389a703c65)
-
+![15-installing-ext-from-catalog](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/0bb14df3-1f6a-48d6-9d48-1ddf90ea0eb3)
 
 # Nightly Build Installation
 
-Use 
+On the `Extension` page press 'Install custom ...'.
 
-`ghcr.io/redhat-developer/podman-desktop-sandbox-ext:latest`
+![image](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/97b4a51a-8c3c-4663-9c17-291022cdb57b)
 
-on `Settings/Extension` page using 'Install a new extension from OCI Image' form (see screenshot below).
+Paste `ghcr.io/redhat-developer/podman-desktop-sandbox-ext:latest` to the `OCI Image` field and press `Install` button.
 
-![image](https://user-images.githubusercontent.com/620330/232674304-5d72e8c5-f4cc-437d-8100-15ae1113fef2.png)
+![image](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/65ccbbcd-6c86-4f06-9033-119ec6b1a990)
+
+
