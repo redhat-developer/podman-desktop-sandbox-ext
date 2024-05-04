@@ -1,12 +1,12 @@
 /**********************************************************************
  * Copyright (C) 2023 Red Hat, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,47 +16,32 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-import {join} from 'path';
-import {builtinModules} from 'module';
-import {node} from './.electron-vendors.cache.json';
-
-const PACKAGE_ROOT = __dirname;
+import path from 'node:path';
 
 /**
+ * Config for global end-to-end tests
+ * placed in project root tests folder
  * @type {import('vite').UserConfig}
- * @see https://vitejs.dev/config/
+ * @see https://vitest.dev/config/
  */
 const config = {
-  mode: process.env.MODE,
-  root: PACKAGE_ROOT,
-  envDir: process.cwd(),
+  test: {
+    globals: true,
+    include: ['./src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    exclude: ['**/builtin/**',
+      '**/node_modules/**',
+      '**/dist/**',
+    ],
+    /**
+     * A default timeout of 5000ms is sometimes not enough for playwright.
+     */
+    testTimeout: 60_000,
+    hookTimeout: 60_000,
+  },
   resolve: {
     alias: {
-      '/@/': join(PACKAGE_ROOT, 'src', '/'),
+      '@podman-desktop/api': path.resolve(__dirname, '__mocks__/@podman-desktop/api.js'),
     },
-  },
-  build: {
-    sourcemap: 'inline',
-    target: `esnext`,
-    outDir: 'dist',
-    assetsDir: '.',
-    minify: process.env.MODE === 'production' ? 'esbuild' : false,
-    lib: {
-      entry: 'src/extension.ts',
-      formats: ['cjs'],
-    },
-    rollupOptions: {
-      external: [
-        '@podman-desktop/api',
-        '@kubernetes/client-node',
-        ...builtinModules.flatMap(p => [p, `node:${p}`]),
-      ],
-      output: {
-        entryFileNames: '[name].cjs',
-      },
-    },
-    emptyOutDir: true,
-    reportCompressedSize: false,
   },
 };
 

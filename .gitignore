@@ -5,3 +5,4 @@ package-lock.json
 redhat-sandbox.cdix
 test-resources
 yarn-error.log
+coverage
