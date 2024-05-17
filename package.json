@@ -63,7 +63,7 @@
     "format:fix": "prettier --write \"**/*.ts\" \"scripts/*.js\""
   },
   "dependencies": {
-    "@kubernetes/client-node": "^0.18.1",
+    "@kubernetes/client-node": "^0.21.0",
     "@podman-desktop/api": "^1.2.0",
     "fs-extra": "^10.1.0",
     "got": "^14.2.1",
