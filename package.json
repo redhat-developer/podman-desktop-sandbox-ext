@@ -66,7 +66,7 @@
     "@kubernetes/client-node": "^0.21.0",
     "@podman-desktop/api": "^1.10.2",
     "fs-extra": "^11.2.0",
-    "got": "^14.2.1",
+    "got": "^14.3.0",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
