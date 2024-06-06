@@ -322,7 +322,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       });
 
       console.log('Default context =>', params[DefaultContextParam]);
-      if (params[DefaultContextParam] === 'on') {
+      if (params[DefaultContextParam]) {
         config.setCurrentContext(params[ContextNameParam]);
       }
 
