@@ -141,5 +141,5 @@ jobs:
       - name: Run formatter
         run: yarn format:check
 
-      - name: Run formatter
+      - name: Run unit tests
         run: yarn test
