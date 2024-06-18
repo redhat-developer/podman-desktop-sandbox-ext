@@ -16,31 +16,21 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-import path from 'node:path';
-
 /**
- * Config for global end-to-end tests
- * placed in project root tests folder
+ * Config for tests
  * @type {import('vite').UserConfig}
  * @see https://vitest.dev/config/
  */
 const config = {
   test: {
     globals: true,
-    include: ['./src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['**/builtin/**',
-      '**/node_modules/**',
-      '**/dist/**',
-    ],
-    /**
-     * A default timeout of 5000ms is sometimes not enough for playwright.
-     */
-    testTimeout: 60_000,
-    hookTimeout: 60_000,
+    coverage: {
+      include: ['**/*.ts'],
+    },
   },
   resolve: {
     alias: {
-      '@podman-desktop/api': path.resolve(__dirname, '__mocks__/@podman-desktop/api.js'),
+      '@podman-desktop/api': `${__dirname}/__mocks__/@podman-desktop/api.js`,
     },
   },
 };
