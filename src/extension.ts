@@ -20,21 +20,20 @@ import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig';
+import { getOpenShiftInternalRegistryPublicHost, whoami } from './openshift';
 
 const ProvideDisplayName = 'Developer Sandbox';
 
 const TelemetryLogger = extensionApi.env.createTelemetryLogger();
 
+export const LoginCommandParam = 'redhat.sandbox.login.command';
+export const ContextNameParam = 'redhat.sandbox.context.name';
+export const DefaultContextParam = 'redhat.sandbox.context.default';
+
 interface ConnectionData {
   disposable?: extensionApi.Disposable;
   connection: extensionApi.KubernetesProviderConnection;
   status: extensionApi.ProviderConnectionStatus;
-}
-
-interface InternalRegistryInfo {
-  host: string;
-  username: string;
-  token: string;
 }
 
 const StartedStatus: extensionApi.ProviderConnectionStatus = 'started';
@@ -43,56 +42,6 @@ const UnknownStatus: extensionApi.ProviderConnectionStatus = 'unknown';
 let provider: extensionApi.Provider;
 let updateConnectionTimeout: NodeJS.Timeout;
 let registeredConnections: Map<string, ConnectionData> = new Map<string, ConnectionData>();
-
-async function whoami(clusterUrl: string, token: string): Promise<string> {
-  const gotOptions = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const username: string = await got(`${clusterUrl}/apis/user.openshift.io/v1/users/~`, gotOptions).then(response => {
-    if (response.statusCode === 200) {
-      const responseObj = JSON.parse(response.body);
-      return responseObj.metadata.name;
-    }
-    throw new Error('Developer Sandbox username cannot be detected.');
-  });
-  return username;
-}
-
-async function getOpenShiftInternalRegistryPublicHost(contextName: string): Promise<InternalRegistryInfo> {
-  const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
-  const context = config.getContextObject(contextName);
-  const cluster = config.getCluster(context.cluster);
-  const user = config.getUser(context.user);
-  const gotOptions = {
-    headers: {
-      Authorization: `Bearer ${user.token}`,
-    },
-  };
-  const publicRegistry: string = await got(
-    `${cluster.server}/apis/image.openshift.io/v1/namespaces/openshift/imagestreams`,
-    gotOptions,
-  ).then(response => {
-    if (response.statusCode === 200) {
-      const responseObj = JSON.parse(response.body);
-      if (responseObj.items.length) {
-        return responseObj.items[0].status.publicDockerImageRepository;
-      }
-    }
-    throw new Error('Could not detect internal Developer Sandbox image registry.');
-  });
-  const host = publicRegistry.substring(0, publicRegistry.indexOf('/'));
-
-  const username: string = await whoami(cluster.server, user.token);
-
-  return {
-    host,
-    username,
-    token: user.token,
-  };
-}
 
 type ImageInfo = { engineId: string; name?: string; tag?: string };
 
@@ -256,10 +205,6 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
   provider = extensionApi.provider.createProvider(providerOptions);
 
-  const LoginCommandParam = 'redhat.sandbox.login.command';
-  const ContextNameParam = 'redhat.sandbox.context.name';
-  const DefaultContextParam = 'redhat.sandbox.context.default';
-
   const kubeconfigUri = extensionApi.kubernetes.getKubeconfig();
   const kubeconfigFile = kubeconfigUri.fsPath;
   console.log('Config file location', kubeconfigFile);
@@ -321,8 +266,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
         namespace: `${username}-dev`,
       });
 
-      console.log('Default context =>', params[DefaultContextParam]);
-      if (params[DefaultContextParam] === 'on') {
+      if (params[DefaultContextParam]) {
         config.setCurrentContext(params[ContextNameParam]);
       }
 
