@@ -74,7 +74,7 @@
     "7zip-min": "^1.4.3",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.14.11",
-    "@vitest/coverage-v8": "^2.0.3",
+    "@vitest/coverage-v8": "^2.0.4",
     "byline": "^5.0.0",
     "copyfiles": "^2.4.1",
     "jsdom": "^24.0.0",
@@ -82,7 +82,7 @@
     "prettier": "^3.3.3",
     "typescript": "^5.5.3",
     "vite": "^5.3.4",
-    "vitest": "^2.0.3",
+    "vitest": "^2.0.4",
     "vscode-uri": "^3.0.8",
     "zip-local": "^0.3.5"
   }
