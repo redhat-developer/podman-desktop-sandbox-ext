@@ -7,10 +7,10 @@
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-5.1.1.tgz#9274ec7460652f9c632c59addf24efb1684ef876"
   integrity sha512-sAP4LldeWNz0lNzmTird3uWfFDWWTeg6V/MsmyyLR9X1idwKBWIgt/ZvinqQldJm3LecKEs1emkbquO6PCiLVQ==
 
-"7zip-min@^1.4.3":
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/7zip-min/-/7zip-min-1.4.4.tgz#82a50a8d3f0a2d86b4c908433c9ec35627f4138c"
-  integrity sha512-mYB1WW5tcXfZxUN4+2joKk4+6j8jp+mpO2YiMU5z1gNNFbACxI2ADasffsdNPovZSwn/E662ZIH5gRkFPMufmA==
+"7zip-min@^1.4.5":
+  version "1.4.5"
+  resolved "https://registry.yarnpkg.com/7zip-min/-/7zip-min-1.4.5.tgz#5d6962ae5f3539fbdf8083a0a9ea2ac353b9ef6d"
+  integrity sha512-S+FzNwJFKF5LgQYs+hPQo+qeffdi+259Ak63rWEfkHP9arsU8gbe5K+4HscuWN1ih1lP1gTjDNPddbU0qhPtHQ==
   dependencies:
     "7zip-bin" "5.1.1"
 
