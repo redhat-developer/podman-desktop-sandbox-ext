@@ -73,7 +73,7 @@
   "devDependencies": {
     "7zip-min": "^1.4.5",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^20.16.2",
+    "@types/node": "^20.16.3",
     "@vitest/coverage-v8": "^2.0.5",
     "byline": "^5.0.0",
     "copyfiles": "^2.4.1",
