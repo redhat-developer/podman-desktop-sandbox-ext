@@ -222,19 +222,29 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@kubernetes/client-node@^0.21.0":
-  version "0.21.0"
-  resolved "https://registry.yarnpkg.com/@kubernetes/client-node/-/client-node-0.21.0.tgz#c807af50e5d4ecbbaa571087636d79cd71a7d9cc"
-  integrity sha512-yYRbgMeyQbvZDHt/ZqsW3m4lRefzhbbJEuj8sVXM+bufKrgmzriA2oq7lWPH/k/LQIicAME9ixPUadTrxIF6dQ==
+"@jsep-plugin/assignment@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@jsep-plugin/assignment/-/assignment-1.2.1.tgz#07277bdd7862451a865d391e2142efba33f46c9b"
+  integrity sha512-gaHqbubTi29aZpVbBlECRpmdia+L5/lh2BwtIJTmtxdbecEyyX/ejAOg7eQDGNvGOUmPY7Z2Yxdy9ioyH/VJeA==
+
+"@jsep-plugin/regex@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@jsep-plugin/regex/-/regex-1.0.3.tgz#3aeaa2e5fa45d89de116aeafbfa41c95935b7f6d"
+  integrity sha512-XfZgry4DwEZvSFtS/6Y+R48D7qJYJK6R9/yJFyUFHCIUMEEHuJ4X95TDgJp5QkmzfLYvapMPzskV5HpIDrREug==
+
+"@kubernetes/client-node@^0.22.0":
+  version "0.22.0"
+  resolved "https://registry.yarnpkg.com/@kubernetes/client-node/-/client-node-0.22.0.tgz#fa0681a88226bc100988c988e1a0786783b69dd1"
+  integrity sha512-K86G5S/V+qMmg/Ht26CtEvTbedsD1u6RaYfIR4V4DphyNBLc3rY20mFNvXVE43MFbQrd5rDOvtOjTCsaVoBiEg==
   dependencies:
     "@types/js-yaml" "^4.0.1"
-    "@types/node" "^20.1.1"
+    "@types/node" "^22.0.0"
     "@types/request" "^2.47.1"
     "@types/ws" "^8.5.3"
     byline "^5.0.0"
     isomorphic-ws "^5.0.0"
     js-yaml "^4.1.0"
-    jsonpath-plus "^8.0.0"
+    jsonpath-plus "^9.0.0"
     request "^2.88.0"
     rfc4648 "^1.3.0"
     stream-buffers "^3.0.2"
@@ -386,7 +396,14 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@^20.1.1", "@types/node@^20.16.5":
+"@types/node@*", "@types/node@^22.0.0":
+  version "22.5.4"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.5.4.tgz#83f7d1f65bc2ed223bdbf57c7884f1d5a4fa84e8"
+  integrity sha512-FDuKUJQm/ju9fT/SeX/6+gBzoPzlVCzfzmGkwKvRHQVxi4BntVbyIwf6a4Xn62mrvndLiml6z/UBXIdEVjQLXg==
+  dependencies:
+    undici-types "~6.19.2"
+
+"@types/node@^20.16.5":
   version "20.16.5"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-20.16.5.tgz#d43c7f973b32ffdf9aa7bd4f80e1072310fd7a53"
   integrity sha512-VwYCweNo3ERajwy0IUlqqcyZ8/A7Zwa9ZP3MnENWcB11AejO+tLy3pu850goUW2FC/IJMdZUfKpX/yxL1gymCA==
@@ -1254,6 +1271,11 @@ jsdom@^25.0.0:
     ws "^8.18.0"
     xml-name-validator "^5.0.0"
 
+jsep@^1.3.8:
+  version "1.3.9"
+  resolved "https://registry.yarnpkg.com/jsep/-/jsep-1.3.9.tgz#8ce42df80ee9c1b39e52d0dd062a465342f35440"
+  integrity sha512-i1rBX5N7VPl0eYb6+mHNp52sEuaS2Wi8CDYx1X5sn9naevL78+265XJqy1qENEk7mRKwS06NHpUqiBwR7qeodw==
+
 json-buffer@3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/json-buffer/-/json-buffer-3.0.1.tgz#9338802a30d3b6605fbe0613e094008ca8c05a13"
@@ -1283,10 +1305,14 @@ jsonfile@^6.0.1:
   optionalDependencies:
     graceful-fs "^4.1.6"
 
-jsonpath-plus@^8.0.0:
-  version "8.1.0"
-  resolved "https://registry.yarnpkg.com/jsonpath-plus/-/jsonpath-plus-8.1.0.tgz#68c92281215672d1d6c785b3c1bdc8acc097ba3f"
-  integrity sha512-qVTiuKztFGw0dGhYi3WNqvddx3/SHtyDT0xJaeyz4uP0d1tkpG+0y5uYQ4OcIo1TLAz3PE/qDOW9F0uDt3+CTw==
+jsonpath-plus@^9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/jsonpath-plus/-/jsonpath-plus-9.0.0.tgz#bb8703ee481531142bca8dee9a42fe72b8358a7f"
+  integrity sha512-bqE77VIDStrOTV/czspZhTn+o27Xx9ZJRGVkdVShEtPoqsIx5yALv3lWVU6y+PqYvWPJNWE7ORCQheQkEe0DDA==
+  dependencies:
+    "@jsep-plugin/assignment" "^1.2.1"
+    "@jsep-plugin/regex" "^1.0.3"
+    jsep "^1.3.8"
 
 jsprim@^1.2.2:
   version "1.4.2"
