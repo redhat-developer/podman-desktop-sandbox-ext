@@ -6,3 +6,5 @@ redhat-sandbox.cdix
 test-resources
 yarn-error.log
 coverage
+tests/**/output
+test-results
