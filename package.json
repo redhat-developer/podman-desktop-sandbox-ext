@@ -7,6 +7,7 @@
   "publisher": "redhat",
   "license": "Apache-2.0",
   "type": "module",
+  "type": "module",
   "engines": {
     "podman-desktop": "^1.10.0"
   },
@@ -60,9 +61,11 @@
   "scripts": {
     "build": "vite build && node ./scripts/build.cjs",
     "watch": "vite build -w",
-    "format:check": "prettier --check \"**/*.ts\" \"scripts/*.cjs\"",
-    "format:fix": "prettier --write \"**/*.ts\" \"scripts/*.cjs\"",
-    "test": "vitest run --coverage"
+    "format:check": "prettier --check \"**/*.ts\" \"scripts/*.js\"",
+    "format:fix": "prettier --write \"**/*.ts\" \"scripts/*.js\"",
+    "test": "vitest run --coverage",
+    "test:e2e:setup": "xvfb-maybe --auto-servernum --server-args='-screen 0 1280x960x24' --",
+    "test:e2e": "npm run test:e2e:setup npx playwright test tests/src"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.22.1",
@@ -71,16 +74,23 @@
     "got": "^14.4.2",
     "js-yaml": "^4.1.0",
     "node-fetch": "^2.6.1"
+    "js-yaml": "^4.1.0",
+    "node-fetch": "^2.6.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.47.1",
+    "@podman-desktop/tests-playwright": "next",
     "@playwright/test": "^1.47.1",
     "@podman-desktop/tests-playwright": "next",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.17.2",
     "@vitest/coverage-v8": "^2.0.5",
     "7zip-min": "^1.4.5",
+    "7zip-min": "^1.4.5",
     "byline": "^5.0.0",
     "copyfiles": "^2.4.1",
+    "cross-env": "7.0.3",
+    "electron": "^32.1.1",
     "cross-env": "7.0.3",
     "electron": "^32.1.1",
     "jsdom": "^25.0.1",
@@ -90,6 +100,7 @@
     "vite": "^5.4.10",
     "vitest": "^2.0.5",
     "vscode-uri": "^3.0.8",
+    "xvfb-maybe": "^0.2.1",
     "xvfb-maybe": "^0.2.1",
     "zip-local": "^0.3.5"
   }
