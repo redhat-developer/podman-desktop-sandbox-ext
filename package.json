@@ -74,7 +74,7 @@
     "got": "^14.4.2"
   },
   "devDependencies": {
-    "@playwright/test": "^1.47.1",
+    "@playwright/test": "1.48.0",
     "@podman-desktop/tests-playwright": "next",
     "@playwright/test": "^1.47.1",
     "@podman-desktop/tests-playwright": "next",
