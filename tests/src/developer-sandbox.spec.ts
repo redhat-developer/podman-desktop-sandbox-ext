@@ -22,8 +22,7 @@ import {
   expect as playExpect,
   ExtensionCardPage,
   RunnerOptions,
-  test,
-  AuthenticationPage,
+  test
 } from '@podman-desktop/tests-playwright';
 import { DeveloperSandboxPage } from './model/pages/developer-sandbox-page';
 
