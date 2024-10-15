@@ -64,7 +64,7 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
 
     // we want to skip removing of the extension when we are running tests from PR check
     test('Uninstall previous version of sandbox extension', async ({ navigationBar }) => {
-      test.skip(!extensionInstalled);
+      test.skip(!extensionInstalled || !!skipInstallation);
       test.setTimeout(60000);
       await removeExtension(navigationBar);
     });
@@ -106,11 +106,11 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
     });
 
     test('Developer Sandbox is available in Resources Page', async ({ navigationBar }) => {
-      playExpect(await isSandboxInResources(navigationBar)).toBeTruthy();
+      await checkSandboxInResources(navigationBar, true);
     });
 
     test('Developer Sandbox is available in Dashboard', async ({ navigationBar }) => {
-      playExpect(await isSandboxInDashboard(navigationBar)).toBeTruthy();
+      await checkSandboxInDashboard(navigationBar, true);
     });
   });
 
@@ -123,8 +123,8 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
       await extensionCard.disableExtension();
       await playExpect(extensionCard.status).toHaveText(disabledExtensionStatus);
 
-      playExpect(await isSandboxInResources(navigationBar)).toBeFalsy();
-      playExpect(await isSandboxInDashboard(navigationBar)).toBeFalsy();
+      await checkSandboxInResources(navigationBar, false);
+      await checkSandboxInDashboard(navigationBar, false);
     });
 
     test('Extension can be re-enabled correctly', async ({ navigationBar }) => {
@@ -135,8 +135,8 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
       await extensionCard.enableExtension();
       await playExpect(extensionCard.status).toHaveText(activeExtensionStatus);
 
-      playExpect(await isSandboxInResources(navigationBar)).toBeTruthy();
-      playExpect(await isSandboxInDashboard(navigationBar)).toBeTruthy();
+      await checkSandboxInResources(navigationBar, true);
+      await checkSandboxInDashboard(navigationBar, true);
     });
   });
 
@@ -155,19 +155,31 @@ async function removeExtension(navBar: NavigationBar): Promise<void> {
     .toBeFalsy();
 }
 
-async function isSandboxInResources(navigationBar: NavigationBar) {
+async function checkSandboxInResources(navigationBar: NavigationBar, isPresent: boolean) {
   const settingsBar = await navigationBar.openSettings();
   const resourcesPage = await settingsBar.openTabPage(ResourcesPage);
   const sandboxResourceCard = resourcesPage.featuredProviderResources.getByRole('region', {
     name: extensionResourceLabel,
   });
   const createButton = sandboxResourceCard.getByRole('button', { name: 'Create new Developer Sandbox' });
-  return (await sandboxResourceCard.isVisible()) && (await createButton.isVisible());
+
+  if (isPresent) {
+    await playExpect(sandboxResourceCard).toBeVisible();
+    await playExpect(createButton).toBeVisible();
+  } else {
+    await playExpect(sandboxResourceCard).toBeHidden();
+  }
 }
 
-async function isSandboxInDashboard(navigationBar: NavigationBar) {
+async function checkSandboxInDashboard(navigationBar: NavigationBar, isPresent: boolean) {
   const dashboardPage = await navigationBar.openDashboard();
   const sandboxProviderCard = dashboardPage.content.getByRole('region', { name: extensionProvider });
   const sandboxStatus = sandboxProviderCard.getByLabel('Connection Status Label');
-  return (await sandboxProviderCard.isVisible()) && (await sandboxStatus.innerText()) === activeConnectionStatus;
+
+  if (isPresent) {
+    await playExpect(sandboxProviderCard).toBeVisible();
+    await playExpect(sandboxStatus).toHaveText(activeConnectionStatus);
+  } else {
+    await playExpect(sandboxProviderCard).toBeHidden();
+  }
 }
