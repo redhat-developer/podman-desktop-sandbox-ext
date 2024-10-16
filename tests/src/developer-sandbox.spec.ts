@@ -23,7 +23,6 @@ import {
   ExtensionCardPage,
   RunnerOptions,
   test,
-  AuthenticationPage,
 } from '@podman-desktop/tests-playwright';
 import { DeveloperSandboxPage } from './model/pages/developer-sandbox-page';
 
@@ -37,7 +36,7 @@ const extensionProvider = 'Developer Sandbox Provider';
 const activeExtensionStatus = 'ACTIVE';
 const disabledExtensionStatus = 'DISABLED';
 const activeConnectionStatus = 'RUNNING';
-const skipInstallation = process.env.SKIP_INSTALLATION ? process.env.SKIP_INSTALLATION : false;
+const skipInstallation = process.env.SKIP_INSTALLATION === 'true';
 
 test.use({
   runnerOptions: new RunnerOptions({ customFolder: 'sandbox-tests-pd', autoUpdate: false, autoCheckUpdates: false }),
@@ -64,7 +63,7 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
 
     // we want to skip removing of the extension when we are running tests from PR check
     test('Uninstall previous version of sandbox extension', async ({ navigationBar }) => {
-      test.skip(!extensionInstalled || !!skipInstallation);
+      test.skip(!extensionInstalled || skipInstallation);
       test.setTimeout(60000);
       await removeExtension(navigationBar);
     });
@@ -72,7 +71,7 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
     // we want to install extension from OCI image (usually using latest tag) after new code was added to the codebase
     // and extension was published already
     test('Extension can be installed using OCI image', async ({ navigationBar }) => {
-      test.skip(extensionInstalled && !skipInstallation);
+      test.skip(skipInstallation);
       test.setTimeout(200000);
       const extensions = await navigationBar.openExtensions();
       await extensions.installExtensionFromOCIImage(imageName);
@@ -155,7 +154,7 @@ async function removeExtension(navBar: NavigationBar): Promise<void> {
     .toBeFalsy();
 }
 
-async function checkSandboxInResources(navigationBar: NavigationBar, isPresent: boolean) {
+async function checkSandboxInResources(navigationBar: NavigationBar, isInstalled: boolean) {
   const settingsBar = await navigationBar.openSettings();
   const resourcesPage = await settingsBar.openTabPage(ResourcesPage);
   const sandboxResourceCard = resourcesPage.featuredProviderResources.getByRole('region', {
@@ -163,7 +162,7 @@ async function checkSandboxInResources(navigationBar: NavigationBar, isPresent: 
   });
   const createButton = sandboxResourceCard.getByRole('button', { name: 'Create new Developer Sandbox' });
 
-  if (isPresent) {
+  if (isInstalled) {
     await playExpect(sandboxResourceCard).toBeVisible();
     await playExpect(createButton).toBeVisible();
   } else {
@@ -171,12 +170,12 @@ async function checkSandboxInResources(navigationBar: NavigationBar, isPresent: 
   }
 }
 
-async function checkSandboxInDashboard(navigationBar: NavigationBar, isPresent: boolean) {
+async function checkSandboxInDashboard(navigationBar: NavigationBar, isInstalled: boolean) {
   const dashboardPage = await navigationBar.openDashboard();
   const sandboxProviderCard = dashboardPage.content.getByRole('region', { name: extensionProvider });
   const sandboxStatus = sandboxProviderCard.getByLabel('Connection Status Label');
 
-  if (isPresent) {
+  if (isInstalled) {
     await playExpect(sandboxProviderCard).toBeVisible();
     await playExpect(sandboxStatus).toHaveText(activeConnectionStatus);
   } else {
