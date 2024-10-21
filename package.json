@@ -6,6 +6,7 @@
   "icon": "icon.png",
   "publisher": "redhat",
   "license": "Apache-2.0",
+  "type": "module",
   "engines": {
     "podman-desktop": "^1.10.0"
   },
