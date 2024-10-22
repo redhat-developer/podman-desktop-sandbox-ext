@@ -6,6 +6,7 @@
   "icon": "icon.png",
   "publisher": "redhat",
   "license": "Apache-2.0",
+  "type": "module",
   "engines": {
     "podman-desktop": "^1.10.0"
   },
@@ -57,10 +58,10 @@
     }
   },
   "scripts": {
-    "build": "vite build && node ./scripts/build.js",
+    "build": "vite build && node ./scripts/build.cjs",
     "watch": "vite build -w",
-    "format:check": "prettier --check \"**/*.ts\" \"scripts/*.js\"",
-    "format:fix": "prettier --write \"**/*.ts\" \"scripts/*.js\"",
+    "format:check": "prettier --check \"**/*.ts\" \"scripts/*.cjs\"",
+    "format:fix": "prettier --write \"**/*.ts\" \"scripts/*.cjs\"",
     "test": "vitest run --coverage"
   },
   "dependencies": {
