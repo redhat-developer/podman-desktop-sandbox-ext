@@ -1,5 +1,5 @@
 /**********************************************************************
- * Copyright (C) 2023 Red Hat, Inc.
+ * Copyright (C) 2024 Red Hat, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,11 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-/**
- * Config for tests
- * @type {import('vite').UserConfig}
- * @see https://vitest.dev/config/
- */
-const excludeArray = [
-  'tests/**', '**/builtin/**',
-  '**/node_modules/**',
-  '**/dist/**',
-  '**/.{idea,git,cache,output,temp,cdix}/**',
-  '**/{.electron-builder,babel,changelog,docusaurus,jest,postcss,prettier,rollup,svelte,tailwind,vite,vitest*,webpack}.config.*',];
+import type { Page } from '@playwright/test';
+import { ExtensionDetailsPage } from '@podman-desktop/tests-playwright';
 
-const config = {
-  test: {
-    globals: true,
-    exclude: excludeArray,
-    coverage: {
-      include: ['./src/**/*.ts}'],
-      exclude: excludeArray,
-    },
-  },
-  resolve: {
-    alias: {
-      '@podman-desktop/api': `${__dirname}/__mocks__/@podman-desktop/api.js`,
-    },
-  },
-};
-
-export default config;
+export class DeveloperSandboxPage extends ExtensionDetailsPage {
+  constructor(page: Page) {
+    super(page, 'Red Hat OpenShift Sandbox extension');
+  }
+}
