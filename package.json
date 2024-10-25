@@ -70,7 +70,7 @@
     "@kubernetes/client-node": "^0.22.1",
     "@podman-desktop/api": "^1.13.3",
     "fs-extra": "^11.2.0",
-    "got": "^14.4.2"
+    "got": "^14.4.3"
   },
   "devDependencies": {
     "@playwright/test": "1.48.0",
@@ -92,7 +92,6 @@
     "vscode-uri": "^3.0.8",
     "xvfb-maybe": "^0.2.1",
     "zip-local": "^0.3.5",
-    "js-yaml": "^4.1.0",
-    "node-fetch": "^2.6.1"
+    "js-yaml": "^4.1.0"
   }
 }
