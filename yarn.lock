@@ -470,7 +470,7 @@
   dependencies:
     undici-types "~6.19.8"
 
-"@types/node@^20.17.3":
+"@types/node@^20.17.3", "@types/node@^20.9.0":
   version "20.17.3"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.3.tgz#1ad87177c53fa2b237e79a4929fd37932f779f0c"
   integrity sha512-tSQrmKKatLDGnG92h40GD7FzUt0MjahaHwOME4VAFeeA/Xopayq5qLyQRy7Jg/pjgKIFBXuKcGhJo+UdYG55jQ==
@@ -958,10 +958,10 @@ ecc-jsbn@~0.1.1:
     jsbn "~0.1.0"
     safer-buffer "^2.1.0"
 
-electron@^32.1.1:
-  version "32.2.2"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-32.2.2.tgz#019fe17329708be2ec677f0d201d785d57123a50"
-  integrity sha512-c7TRE42JcgEmJ4elJyCdKk/2os0UX7YMkRDeXBkxFEoM34iX1/2x+c5T9PgeroKz8FEG7omRU5TvjulqVtXvdw==
+electron@^33.0.2:
+  version "33.0.2"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-33.0.2.tgz#db31b105bf0edd7c8600dfb70c2dfc214e3789f1"
+  integrity sha512-C2WksfP0COsMHbYXSJG68j6S3TjuGDrw/YT42B526yXalIlNQZ2GeAYKryg6AEMkIp3p8TUfDRD0+HyiyCt/nw==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^20.9.0"
