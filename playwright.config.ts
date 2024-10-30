@@ -1,5 +1,5 @@
 /**********************************************************************
- * Copyright (C) 2023 Red Hat, Inc.
+ * Copyright (C) 2024 Red Hat, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,26 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-/**
- * Config for tests
- * @type {import('vite').UserConfig}
- * @see https://vitest.dev/config/
- */
-const excludeArray = [
-  'tests/**', '**/builtin/**',
-  '**/node_modules/**',
-  '**/dist/**',
-  '**/.{idea,git,cache,output,temp,cdix}/**',
-  '**/{.electron-builder,babel,changelog,docusaurus,jest,postcss,prettier,rollup,svelte,tailwind,vite,vitest*,webpack}.config.*',];
+import { defineConfig, devices } from '@playwright/test';
 
-const config = {
-  test: {
-    globals: true,
-    exclude: excludeArray,
-    coverage: {
-      include: ['./src/**/*.ts}'],
-      exclude: excludeArray,
-    },
-  },
-  resolve: {
-    alias: {
-      '@podman-desktop/api': `${__dirname}/__mocks__/@podman-desktop/api.js`,
-    },
-  },
-};
+export default defineConfig({
+  outputDir: 'tests/output/',
+  workers: 1,
+  timeout: 60000,
 
-export default config;
+  reporter: [
+    ['list'],
+    ['junit', { outputFile: 'tests/output/junit-results.xml' }],
+    ['json', { outputFile: 'tests/output/json-results.json' }],
+    ['html', { open: 'never', outputFolder: 'tests/playwright/output/html-results' }],
+  ],
+
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    },
+  ],
+});
