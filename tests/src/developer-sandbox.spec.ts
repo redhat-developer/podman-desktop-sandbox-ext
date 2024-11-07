@@ -120,6 +120,7 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
       const extensionCard = await extensions.getInstalledExtension(extensionLabelName, extensionLabel);
       await playExpect(extensionCard.status).toHaveText(activeExtensionStatus);
       await extensionCard.disableExtension();
+      await playExpect(extensionCard.removeButton).toBeEnabled();
       await playExpect(extensionCard.status).toHaveText(disabledExtensionStatus);
 
       await checkSandboxInResources(navigationBar, false);
@@ -148,6 +149,7 @@ async function removeExtension(navBar: NavigationBar): Promise<void> {
   const extensions = await navBar.openExtensions();
   const extensionCard = await extensions.getInstalledExtension(extensionLabelName, extensionLabel);
   await extensionCard.disableExtension();
+  await playExpect(extensionCard.removeButton).toBeEnabled();
   await extensionCard.removeExtension();
   await playExpect
     .poll(async () => await extensions.extensionIsInstalled(extensionLabel), { timeout: 15000 })
