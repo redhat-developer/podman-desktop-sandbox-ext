@@ -143,3 +143,78 @@ jobs:
 
       - name: Run unit tests
         run: yarn test
+
+  e2e-tests:
+    name: e2e tests smoke
+    runs-on: ubuntu-24.04
+    env:
+      SKIP_INSTALLATION: true
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          path: podman-desktop-sandbox-ext
+
+      # Install nodejs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Checkout podman desktop
+      - uses: actions/checkout@v4
+        with:
+          repository: containers/podman-desktop
+          ref: main
+          path: podman-desktop
+
+      # Setup pnpm
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          run_install: false
+          package_json_file: ./podman-desktop/package.json
+
+      - name: Build Podman Desktop for E2E tests
+        working-directory: ./podman-desktop
+        run: |
+          pnpm install
+          pnpm test:e2e:build
+
+      - name: Revert unprivileged user namespace restrictions in Ubuntu 24.04
+        run: |
+          # allow unprivileged user namespace
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Ensure getting current HEAD version of the test framework
+        working-directory: ./podman-desktop-sandbox-ext
+        run: |
+          # workaround for https://github.com/containers/podman-desktop-extension-bootc/issues/712
+          version=$(npm view @podman-desktop/tests-playwright@next version)
+          echo "Version of @podman-desktop/tests-playwright to be used: $version"
+          jq --arg version "$version" '.devDependencies."@podman-desktop/tests-playwright" = $version' package.json > package.json_tmp && mv package.json_tmp package.json
+
+      - name: Execute yarn in Sandbox extension
+        working-directory: ./podman-desktop-sandbox-ext
+        run: yarn install
+      
+      - name: Build Sandbox extension from container file
+        working-directory: ./podman-desktop-sandbox-ext
+        run: |
+          yarn build
+          podman build -t local_sandbox_image ./
+          CONTAINER_ID=$(podman create localhost/local_sandbox_image --entrypoint "")
+          mkdir -p tests/playwright/output/sandbox-tests-pd/plugins
+          podman export $CONTAINER_ID | tar -x -C tests/playwright/output/sandbox-tests-pd/plugins/
+          podman rm -f $CONTAINER_ID
+          podman rmi -f localhost/local_sandbox_image:latest
+          
+      - name: Run E2E tests
+        working-directory: ./podman-desktop-sandbox-ext
+        env:
+          PODMAN_DESKTOP_ARGS: ${{ github.workspace }}/podman-desktop
+        run: yarn test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-tests
+          path: ./**/tests/**/output/
