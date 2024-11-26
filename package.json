@@ -87,7 +87,7 @@
     "mkdirp": "^3.0.1",
     "prettier": "^3.4.1",
     "typescript": "^5.7.2",
-    "vite": "^5.4.11",
+    "vite": "^6.0.0",
     "vitest": "^2.0.5",
     "vscode-uri": "^3.0.8",
     "xvfb-maybe": "^0.2.1",
