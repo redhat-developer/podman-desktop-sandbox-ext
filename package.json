@@ -67,7 +67,7 @@
     "test:e2e": "npm run test:e2e:setup npx playwright test tests/src"
   },
   "dependencies": {
-    "@kubernetes/client-node": "^0.22.2",
+    "@kubernetes/client-node": "^0.22.3",
     "@podman-desktop/api": "^1.14.1",
     "fs-extra": "^11.2.0",
     "got": "^14.4.4"
