@@ -85,7 +85,7 @@
     "electron": "^33.2.1",
     "jsdom": "^25.0.1",
     "mkdirp": "^3.0.1",
-    "prettier": "^3.4.1",
+    "prettier": "^3.4.2",
     "typescript": "^5.7.2",
     "vite": "^6.0.2",
     "vitest": "^2.0.5",
