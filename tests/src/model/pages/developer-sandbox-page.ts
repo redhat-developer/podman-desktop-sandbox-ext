@@ -21,6 +21,6 @@ import { ExtensionDetailsPage } from '@podman-desktop/tests-playwright';
 
 export class DeveloperSandboxPage extends ExtensionDetailsPage {
   constructor(page: Page) {
-    super(page, 'Red Hat OpenShift Sandbox extension');
+    super(page, 'Developer Sandbox Extension');
   }
 }

@@ -295,7 +295,7 @@ function updateConnectionsPeriodically(): void {
 }
 
 export function deactivate(): void {
-  console.log('deactivating extension openshift-sandbox');
+  console.log('deactivating redhat-sandbox extension');
   if (updateConnectionTimeout) {
     clearTimeout(updateConnectionTimeout);
   }

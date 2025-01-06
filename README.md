@@ -1,6 +1,6 @@
-# Podman Desktop OpenShift Developer Sandbox Extension
+# Podman Desktop Developer Sandbox Extension
 
-This extension puts you to just few clicks away form deploying your application to [OpenShift Developer Sandbox](https://developers.redhat.com/developer-sandbox), a 30 days no cost shared cluster on [OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift).
+This extension puts you to just few clicks away form deploying your application to [Developer Sandbox](https://developers.redhat.com/developer-sandbox), a 30 days no cost shared cluster on [OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift).
 After few simple configuration steps the extension allows you to push an image to Sandbox internal image registry, so you can create and start containers from that image in OpenShift cluster using Podman Desktop UI.
 
 # Usage
@@ -75,7 +75,7 @@ The browser window should show default test page for the running HTTPD server.
 
 # Installation
 
-You can install OpenShift Developer Sandbox Extension directly from Podman Desktop Extension page.
+You can install Developer Sandbox Extension directly from Podman Desktop Extension page.
 
 ![15-installing-ext-from-catalog](https://github.com/redhat-developer/podman-desktop-sandbox-ext/assets/620330/0bb14df3-1f6a-48d6-9d48-1ddf90ea0eb3)
 
