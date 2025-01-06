@@ -90,7 +90,7 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
     test("Extension's details show correct status, no error", async ({ page, navigationBar }) => {
       const extensions = await navigationBar.openExtensions();
       const extensionCard = await extensions.getInstalledExtension(extensionLabelName, extensionLabel);
-      await extensionCard.openExtensionDetails('Red Hat Openshift Sandbox extension');
+      await extensionCard.openExtensionDetails('Developer Sandbox Extension');
       const details = new DeveloperSandboxPage(page);
       await playExpect(details.heading).toBeVisible();
       await playExpect(details.status).toHaveText(activeExtensionStatus);

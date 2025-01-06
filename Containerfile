@@ -17,8 +17,8 @@
 
 FROM scratch
 
-LABEL org.opencontainers.image.title="OpenShift developer sandbox provider" \
-        org.opencontainers.image.description="OpenShift Developer sandbox provider for Podman Desktop" \
+LABEL org.opencontainers.image.title="Developer Sandbox Provider" \
+        org.opencontainers.image.description="Developer Sandbox provider for Podman Desktop" \
         org.opencontainers.image.vendor="Red Hat" \
         io.podman-desktop.api.version=">= 0.14.1"
 
