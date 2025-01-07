@@ -171,7 +171,7 @@ async function registerConnection(contextName: string, apiURL: string, token: st
 }
 
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
-  console.log('starting extension openshift-sandbox');
+  console.log('starting extension redhat-developer-sandbox');
 
   let status: extensionApi.ProviderStatus = 'ready';
   const icon = './icon.png';
@@ -295,7 +295,7 @@ function updateConnectionsPeriodically(): void {
 }
 
 export function deactivate(): void {
-  console.log('deactivating redhat-sandbox extension');
+  console.log('deactivating redhat-developer-sandbox extension');
   if (updateConnectionTimeout) {
     clearTimeout(updateConnectionTimeout);
   }
