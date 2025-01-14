@@ -206,6 +206,11 @@ jobs:
           podman export $CONTAINER_ID | tar -x -C tests/playwright/output/sandbox-tests-pd/plugins/
           podman rm -f $CONTAINER_ID
           podman rmi -f localhost/local_sandbox_image:latest
+
+      - name: Delete Electron resources folder before E2E tests
+        working-directory: ./podman-desktop-sandbox-ext
+        run: |
+          rm -rf tests/playwright/output/sandbox-tests-pd/plugins/extension/node_modules/electron/dist/resources
           
       - name: Run E2E tests
         working-directory: ./podman-desktop-sandbox-ext
