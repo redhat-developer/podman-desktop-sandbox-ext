@@ -21,20 +21,13 @@
  * @type {import('vite').UserConfig}
  * @see https://vitest.dev/config/
  */
-const excludeArray = [
-  'tests/**', '**/builtin/**',
-  '**/node_modules/**',
-  '**/dist/**',
-  '**/.{idea,git,cache,output,temp,cdix}/**',
-  '**/{.electron-builder,babel,changelog,docusaurus,jest,postcss,prettier,rollup,svelte,tailwind,vite,vitest*,webpack}.config.*',];
 
 const config = {
   test: {
     globals: true,
-    exclude: excludeArray,
+    include: ['src/**/*.spec.ts'],
     coverage: {
-      include: ['./src/**/*.ts}'],
-      exclude: excludeArray,
+      include: ['src/**/*.ts'],
     },
   },
   resolve: {
