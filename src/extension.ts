@@ -194,9 +194,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
   extensionContext.subscriptions.push(
     extensionApi.commands.registerCommand('sandbox.open.login.url', () => {
       extensionApi.env
-        .openExternal(
-          extensionApi.Uri.parse('https://console.redhat.com/openshift/sandbox?sc_cid=7013a000003SUmgAAG'),
-        )
+        .openExternal(extensionApi.Uri.parse('https://console.redhat.com/openshift/sandbox?sc_cid=7013a000003SUmgAAG'))
         .then(successful => {
           TelemetryLogger.logUsage('sandboxOpenLoginUrlRequest', { successful });
         });
