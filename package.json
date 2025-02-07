@@ -2,7 +2,7 @@
   "name": "redhat-sandbox",
   "displayName": "Developer Sandbox",
   "description": "Sign up and provisioning for Developer Sandbox",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "icon": "icon.png",
   "publisher": "redhat",
   "license": "Apache-2.0",
