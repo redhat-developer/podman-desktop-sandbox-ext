@@ -183,7 +183,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
     images: {
       icon: {
         dark: './statusbar-icon.png',
-        light: './icon.png'
+        light: './icon.png',
       },
       logo: icon,
     },
