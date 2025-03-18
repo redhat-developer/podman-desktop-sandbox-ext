@@ -94,10 +94,7 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
             await extensionApi.containerEngine.pushImage(
               image.engineId,
               remoteImageName,
-              (name, data) => {
-                if (name === 'data') {
-                  progress.report({ message: data });
-                }
+              (name) => {
                 if (name === 'end') {
                   resolve(undefined);
                 }
