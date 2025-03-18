@@ -1,5 +1,6 @@
 dist/**
 icon.png
+statusbar-icon.png
 LICENSE
 package.json
 README.md
