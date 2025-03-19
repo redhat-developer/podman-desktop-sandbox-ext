@@ -17,7 +17,7 @@
  ***********************************************************************/
 
 import got from 'got';
-import * as kubeconfig from './kubeconfig';
+import * as kubeconfig from './kubeconfig.js';
 import * as extensionApi from '@podman-desktop/api';
 
 export interface InternalRegistryInfo {
