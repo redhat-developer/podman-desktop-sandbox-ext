@@ -20,13 +20,13 @@
 
 import { beforeEach, expect, Mock, suite, test, vi } from 'vitest';
 import * as podmanDesktopApi from '@podman-desktop/api';
-import * as extension from './extension';
+import * as extension from './extension.js';
 import { URI } from 'vscode-uri';
-import * as openshift from './openshift';
-import * as kubeconfig from './kubeconfig';
+import * as openshift from './openshift.js';
+import * as kubeconfig from './kubeconfig.js';
 import { KubeConfig } from '@kubernetes/client-node';
 
-const getKubeconfigMock = podmanDesktopApi.kubernetes.getKubeconfig as unknown as Mock<any>;
+const getKubeconfigMock = vi.mocked(podmanDesktopApi.kubernetes.getKubeconfig);
 getKubeconfigMock.mockReturnValue(URI.parse('file:///usr/home/test'));
 
 const context: podmanDesktopApi.ExtensionContext = {
