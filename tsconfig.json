@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "types": [ "node" ],
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true
   },
   "include": [
