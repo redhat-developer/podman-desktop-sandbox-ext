@@ -26,7 +26,7 @@ import * as openshift from './openshift';
 import * as kubeconfig from './kubeconfig';
 import { KubeConfig } from '@kubernetes/client-node';
 
-const getKubeconfigMock = podmanDesktopApi.kubernetes.getKubeconfig as unknown as Mock<any, any>;
+const getKubeconfigMock = podmanDesktopApi.kubernetes.getKubeconfig as unknown as Mock<any>;
 getKubeconfigMock.mockReturnValue(URI.parse('file:///usr/home/test'));
 
 const context: podmanDesktopApi.ExtensionContext = {
