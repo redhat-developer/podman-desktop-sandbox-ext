@@ -15,7 +15,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
-
 /**
  * Mock the extension API for vitest.
  * This file is referenced from vitest.config.js file.
@@ -25,7 +24,9 @@ module.exports = {
   provider: {
     createProvider: () => {
       return {
-        registerKubernetesProviderConnection: vi.fn(),
+        registerKubernetesProviderConnection: () => ({
+          dispose: vi.fn(),
+        }),
         setKubernetesProviderConnectionFactory: vi.fn(),
       }
     }
@@ -33,6 +34,8 @@ module.exports = {
 
   containerEngine: {
     listContainers: vi.fn(),
+    tagImage: vi.fn(),
+    pushImage: vi.fn(),
   },
 
   kubernetes: {
@@ -49,6 +52,15 @@ module.exports = {
 
   commands: {
     registerCommand: vi.fn(),
+  },
+
+  window: {
+    withProgress: vi.fn(),
+    showInformationMessage: vi.fn(),
+  },
+
+  ProgressLocation: {
+    TASK_WIDGET: 'task',
   }
 };
 

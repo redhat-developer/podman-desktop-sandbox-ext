@@ -41,6 +41,22 @@ const context: podmanDesktopApi.ExtensionContext = {
   },
 };
 
+vi.mock('got', () => ({
+  default: vi.fn().mockImplementation(async (url: string) => {
+    if (url.includes('users')) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ kind: 'User', metadata: { name: 'username' } }),
+      };
+    } else {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ items: [{ status: { publicDockerImageRepository: 'registry-host' } }] }),
+      };
+    }
+  }),
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -48,26 +64,27 @@ beforeEach(() => {
 test('kubernetes provider connection factory is set during activation', async () => {
   const providerMock: podmanDesktopApi.Provider = {
     setKubernetesProviderConnectionFactory: vi.fn(),
+    registerKubernetesProviderConnection: () => ({
+      dispose: vi.fn(),
+    }),
   } as any as podmanDesktopApi.Provider;
-  const setKubeProvideConnFactoryMock = vi
-    .spyOn(podmanDesktopApi.provider, 'createProvider')
-    .mockReturnValue(providerMock);
+  vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
   await extension.activate(context);
   expect(providerMock.setKubernetesProviderConnectionFactory).toBeCalled();
 });
-
+``;
 suite('kubernetes provider connection factory', () => {
   async function callCreate(
     params: { [key: string]: any } = {},
     config: KubeConfig = new KubeConfig(),
-    username: string = 'username',
   ): Promise<{ error: Error; provider: podmanDesktopApi.Provider } | undefined> {
     const providerMock: podmanDesktopApi.Provider = {
       setKubernetesProviderConnectionFactory: vi.fn(),
+      registerKubernetesProviderConnection: () => ({
+        dispose: vi.fn(),
+      }),
     } as any as podmanDesktopApi.Provider;
-    const setKubeProvideConnFactoryMock = vi
-      .spyOn(podmanDesktopApi.provider, 'createProvider')
-      .mockReturnValue(providerMock);
+    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
     await extension.activate(context);
     const connectionFactory = vi.mocked(providerMock.setKubernetesProviderConnectionFactory).mock.calls[0][0];
     let verificationError: Error;
@@ -125,7 +142,6 @@ suite('kubernetes provider connection factory', () => {
         'redhat.sandbox.context.default': true,
       },
       config,
-      'username',
     );
     expect(kubeconfig.exportToFile).toHaveBeenCalledOnce();
     expect(config.getContexts()).toEqual(
@@ -140,14 +156,13 @@ suite('kubernetes provider connection factory', () => {
 
   test('creates new context for sandbox with specified url/token and does not set it as default context', async () => {
     const config = new KubeConfig();
-    const result = await callCreate(
+    await callCreate(
       {
         'redhat.sandbox.context.name': 'contextName',
         'redhat.sandbox.login.command': 'oc login --server=https://sandbox.openshift.com --token=base64_secret',
         'redhat.sandbox.context.default': false,
       },
       config,
-      'username',
     );
     expect(kubeconfig.exportToFile).toHaveBeenCalledOnce();
     expect(config.getContexts()).toEqual(
@@ -158,5 +173,106 @@ suite('kubernetes provider connection factory', () => {
       ]),
     );
     expect(config.currentContext).is.not.equal('contextName');
+  });
+
+  test('push image to sandbox does not change title after it is finished', async () => {
+    vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockImplementation((_file: string) => {
+      const config = new KubeConfig();
+      config.loadFromOptions({
+        contexts: [
+          {
+            cluster: 'sandbox-cluster-5s99ck',
+            name: 'dev-sandbox-context',
+            user: 'sandbox-user-5s99ck',
+            namespace: 'username-dev',
+          },
+        ],
+        clusters: [
+          {
+            name: 'sandbox-cluster-5s99ck',
+            server: 'https://reqion.openshiftapps.com:6443',
+            skipTLSVerify: false,
+          },
+        ],
+        users: [
+          {
+            name: 'sandbox-user-5s99ck',
+            token: 'sha256~token',
+          },
+        ],
+      });
+      return config;
+    });
+    const registerCommandMock = vi.mocked(podmanDesktopApi.commands.registerCommand);
+    let commandCallback: (...args: any[]) => any;
+    registerCommandMock.mockImplementation((commandId: string, callback: (...args: any[]) => any) => {
+      if (commandId === 'sandbox.image.push.to.cluster') {
+        commandCallback = callback;
+      }
+      return {
+        dispose: vi.fn(),
+      };
+    });
+    let registeredConnection: { status: () => any };
+    const providerMock: podmanDesktopApi.Provider = {
+      setKubernetesProviderConnectionFactory: vi.fn(),
+      registerKubernetesProviderConnection: connection => {
+        registeredConnection = connection;
+        return {
+          dispose: vi.fn(),
+        };
+      },
+    } as any as podmanDesktopApi.Provider;
+    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+    const report = vi.fn();
+    vi.mocked(podmanDesktopApi.window.withProgress).mockImplementation(
+      (
+        options: podmanDesktopApi.ProgressOptions,
+        task: (
+          progress: podmanDesktopApi.Progress<{
+            message?: string;
+            increment?: number;
+          }>,
+          token: podmanDesktopApi.CancellationToken,
+        ) => Promise<unknown>,
+      ): Promise<void> => {
+        const progress: podmanDesktopApi.Progress<{ message?: string; increment?: number }> = {
+          report,
+        };
+        task(progress, undefined);
+        return;
+      },
+    );
+    let pushImageCallback: (name: string, data?: string) => void;
+    vi.mocked(podmanDesktopApi.containerEngine.pushImage).mockImplementation(
+      async (
+        _engineId: string,
+        _imageId: string,
+        callback: (name: string, data: string) => Promise<void>,
+        _authInfo?: podmanDesktopApi.ContainerAuthInfo,
+      ) => {
+        pushImageCallback = callback;
+      },
+    );
+    await extension.activate(context);
+
+    await vi.waitFor(async () => {
+      expect(registeredConnection.status()).toEqual('started');
+    }, 3000);
+
+    expect(commandCallback).toBeDefined();
+
+    const imageInfo = { engineId: 'podman', name: 'imageName', tag: 'registry-host/repository/image' };
+
+    await Promise.resolve(commandCallback(...[imageInfo]));
+
+    await vi.waitFor(async () => {
+      expect(pushImageCallback).toBeDefined();
+    }, 3000);
+
+    pushImageCallback('data', 'data-chunk-1');
+    pushImageCallback('end');
+
+    expect(report).not.toHaveBeenCalledWith(expect.objectContaining({ message: 'data-chunk-1' }));
   });
 });
