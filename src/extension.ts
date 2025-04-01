@@ -19,8 +19,8 @@
 import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
-import * as kubeconfig from './kubeconfig';
-import { getOpenShiftInternalRegistryPublicHost, whoami } from './openshift';
+import * as kubeconfig from './kubeconfig.js';
+import { getOpenShiftInternalRegistryPublicHost, whoami } from './openshift.js';
 
 const ProvideDisplayName = 'Developer Sandbox';
 
