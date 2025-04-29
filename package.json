@@ -55,6 +55,15 @@
           "title": "Push image to Developer Sandbox cluster"
         }
       ]
+    },
+    "icons": {
+      "sandbox-icon": {
+        "description": "Developer Sandbox icon",
+        "default": {
+          "fontPath": "sandbox-icon.woff2",
+          "fontCharacter": "\\e900"
+        }
+      }
     }
   },
   "scripts": {

@@ -21,6 +21,7 @@ import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
 import { getOpenShiftInternalRegistryPublicHost, whoami } from './openshift.js';
+import { type IconDefinition } from '@fortawesome/free-solid-svg-icons';
 
 const ProvideDisplayName = 'Developer Sandbox';
 
@@ -178,7 +179,11 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
     id: 'redhat.sandbox',
     status,
     images: {
-      icon,
+      icon: {
+        dark: icon,
+        light: icon,
+        fontId: 'sandbox-icon',
+      },
       logo: {
         dark: icon,
         light: icon,
