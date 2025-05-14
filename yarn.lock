@@ -329,9 +329,9 @@
   integrity sha512-9c9IuDYADNq0u8DZvQ7qORorXa9md+VZtxFXbc7xuv7LKavu8Nb0PcEhci4r4zD+u7Onk/O1f9aijLwH8kHkYw==
 
 "@podman-desktop/tests-playwright@next":
-  version "1.19.0-202505121352-fc7e91a5ce6"
-  resolved "https://registry.yarnpkg.com/@podman-desktop/tests-playwright/-/tests-playwright-1.19.0-202505121352-fc7e91a5ce6.tgz#80aea0649340d7915a477fa48f6847142f6f798e"
-  integrity sha512-g+lNYknGRgehw+1vjoDzz8+ffmUQWcYre6rXMn6V36v/nrjeH+Mh+q3hppYzscWubCN85yqCQc3DTHh7GKAfWQ==
+  version "1.19.0-202505132103-67b0fbb42f1"
+  resolved "https://registry.yarnpkg.com/@podman-desktop/tests-playwright/-/tests-playwright-1.19.0-202505132103-67b0fbb42f1.tgz#25864b11447f4c4c08ac7a8d9f1a70b5f4895bd4"
+  integrity sha512-sk5hdOwSqzhIoL9BcN41d0ATSwA1fAqmuBMiJdP3rVex20pXOl6MMYGTbWCaRu5OPogJTVGSciXXyQ1PunTSEg==
 
 "@rollup/rollup-android-arm-eabi@4.40.0":
   version "4.40.0"
