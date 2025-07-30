@@ -183,10 +183,11 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
         await settingsBar.resourcesTab.click();
         const resourcesPage = new ResourcesPage(page);
         playExpect(await resourcesPage.resourceCardIsVisible(resourceCardLabel)).toBeTruthy();
-        await resourcesPage.goToCreateNewResourcePage(resourceName);
+        const createNewSandboxButton = page.getByRole('button', { name: `Create new ${resourceName}` }); //goToCreateNewResourcePage only takes 1 argument
+        await createNewSandboxButton.click();
         const createResourcePage = new CreateResourcePage(page);
         await createResourcePage.logIntoSandboxButton.click();
-        const websiteDialog = createResourcePage.content.getByRole('dialog', { name: 'Open External Website' });
+        const websiteDialog = page.getByRole('dialog', { name: 'Open External Website' });
         await playExpect(websiteDialog).toBeVisible();
         const sandboxUrl = await websiteDialog.getByLabel('Dialog Details').textContent();
         const cancelDialogButton = websiteDialog.getByRole('button', { name: 'Cancel' });
