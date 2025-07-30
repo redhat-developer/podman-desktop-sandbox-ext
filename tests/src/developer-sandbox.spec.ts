@@ -49,6 +49,7 @@ const skipInstallation = process.env.SKIP_INSTALLATION === 'true';
 let browserOutputPath: string;
 let loginCommand = '';
 const resourceCardLabel = 'redhat.sandbox';
+const resourceName = 'Developer Sandbox';
 const contextName = 'dev-sandbox-context-3';
 const chromePort = '9222';
 
@@ -165,7 +166,9 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
       test.afterAll(async () => {
         if (browser) {
           console.log('Stopping tracing and closing browser...');
-          await context?.tracing.stop({ path: join(path.join(browserOutputPath), 'traces', 'browser-sandbox-trace.zip') });
+          await context?.tracing.stop({
+            path: join(path.join(browserOutputPath), 'traces', 'browser-sandbox-trace.zip'),
+          });
           if (chromiumPage) {
             await chromiumPage.close();
           }
@@ -180,7 +183,7 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
         await settingsBar.resourcesTab.click();
         const resourcesPage = new ResourcesPage(page);
         playExpect(await resourcesPage.resourceCardIsVisible(resourceCardLabel)).toBeTruthy();
-        await resourcesPage.goToCreateNewResourcePage(resourceCardLabel);
+        await resourcesPage.goToCreateNewResourcePage(resourceName);
         const createResourcePage = new CreateResourcePage(page);
         await createResourcePage.logIntoSandboxButton.click();
         const websiteDialog = createResourcePage.content.getByRole('dialog', { name: 'Open External Website' });
@@ -234,13 +237,17 @@ test.describe.serial('Red Hat Developer Sandbox extension verification', () => {
         await usernameBox.focus();
 
         //after login redirect twice to sandbox.redhat.com, same tab
-        await performBrowserLogin(chromiumPage, /Log In/, usernameAction, passwordAction, async (chromiumPage) => {
+        await performBrowserLogin(chromiumPage, /Log In/, usernameAction, passwordAction, async chromiumPage => {
           playExpect(chromiumPage).toBeDefined();
           if (!chromiumPage) {
             throw new Error('Chromium browser page was not initialized');
           }
           playExpect(await chromiumPage.title()).toBe('Developer Sandbox | Developer Sandbox');
-          await chromiumPage.screenshot({ path: join(path.join(browserOutputPath), 'screenshots', 'after_login_in_browser.png'), type: 'png', fullPage: true });
+          await chromiumPage.screenshot({
+            path: join(path.join(browserOutputPath), 'screenshots', 'after_login_in_browser.png'),
+            type: 'png',
+            fullPage: true,
+          });
         });
       });
       test('Fetch the login command', async () => {

@@ -153,7 +153,7 @@ jobs:
       DVLPR_PASSWORD: ${{ secrets.DVLPR_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-        with: 
+        with:
           path: podman-desktop-sandbox-ext
 
       # Install nodejs
@@ -197,7 +197,7 @@ jobs:
       - name: Execute yarn in Sandbox extension
         working-directory: ./podman-desktop-sandbox-ext
         run: yarn install
-      
+
       - name: Build Sandbox extension from container file
         working-directory: ./podman-desktop-sandbox-ext
         run: |
@@ -213,7 +213,7 @@ jobs:
         working-directory: ./podman-desktop-sandbox-ext
         run: |
           rm -rf tests/playwright/output/sandbox-tests-pd/plugins/extension/node_modules/electron/dist/resources
-          
+
       - name: Run E2E tests
         working-directory: ./podman-desktop-sandbox-ext
         env:
