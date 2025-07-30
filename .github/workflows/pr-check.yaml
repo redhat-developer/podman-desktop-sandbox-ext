@@ -149,6 +149,8 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       SKIP_INSTALLATION: true
+      DVLPR_USERNAME: ${{ secrets.DVLPR_USERNAME }}
+      DVLPR_PASSWORD: ${{ secrets.DVLPR_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
         with: 
