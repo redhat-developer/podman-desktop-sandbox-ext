@@ -94,7 +94,7 @@
     "jsdom": "^26.1.0",
     "mkdirp": "^3.0.1",
     "prettier": "^3.6.2",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.2",
     "vite": "^7.0.6",
     "vitest": "^3.0.5",
     "vscode-uri": "^3.1.0",
