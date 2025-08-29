@@ -16,12 +16,13 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-import { KubeConfig } from '@kubernetes/client-node';
+import { CoreV1Api, KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
-import { getOpenShiftInternalRegistryPublicHost, whoami } from './openshift.js';
-import { type IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { getOpenShiftInternalRegistryPublicHost, getPipelineServiceAccountToken, whoami } from './openshift.js';
+import { createSandboxAPI, getDevSandboxSignUpStatus, SBSignupResponse } from './sandbox.js';
+import { sign } from 'crypto';
 
 const ProvideDisplayName = 'Developer Sandbox';
 
@@ -220,22 +221,17 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       if (!params[ContextNameParam]) {
         throw new Error('Context name is required.');
       }
+      const ssoSession = await extensionApi.authentication.getSession('redhat.authentication-provider', ['openid'], {
+        createIfNone: true,
+      });
 
-      // get form parameters
-      const loginCommand: string = params[LoginCommandParam];
-      if (loginCommand.trim().length === 0) {
-        throw new Error('Login command is required.');
-      }
+      let status: SBSignupResponse = await getDevSandboxSignUpStatus((ssoSession as any).idToken);
 
-      const apiURLMatch = loginCommand.match(/--server=([^\s]*)/);
-      const tokenMatch = loginCommand.match(/--token=([^\s]*)/);
-
-      if (!apiURLMatch || !tokenMatch) {
-        throw new Error('Login command is invalid or missing required options --server and --token.');
-      }
-
-      const apiURL = apiURLMatch[1];
-      const token = tokenMatch[1];
+      const token = await getPipelineServiceAccountToken(
+        status.proxyURL,
+        status.compliantUsername,
+        (ssoSession as any).idToken,
+      );
 
       // add cluster to kubeconfig
       const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
@@ -248,10 +244,9 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
       const clusterName = `sandbox-cluster-${suffix}`; // has unique name
       const userName = `sandbox-user-${suffix}`; // generate a unique name for the user
-      const username: string = await whoami(apiURL, token);
 
       config.addCluster({
-        server: apiURL,
+        server: status.apiEndpoint,
         name: clusterName,
         skipTLSVerify: false,
       });
@@ -263,16 +258,15 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
         cluster: clusterName,
         user: userName,
         name: params[ContextNameParam],
-        namespace: `${username}-dev`,
+        namespace: `${status.compliantUsername}-dev`,
       });
-
       if (params[DefaultContextParam]) {
         config.setCurrentContext(params[ContextNameParam]);
       }
 
       kubeconfig.exportToFile(config, kubeconfigFile);
 
-      await registerConnection(params[ContextNameParam], apiURL, token);
+      await registerConnection(params[ContextNameParam], status.apiEndpoint, token);
     },
     creationDisplayName: ProvideDisplayName,
   });

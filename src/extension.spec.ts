@@ -23,6 +23,7 @@ import * as podmanDesktopApi from '@podman-desktop/api';
 import * as extension from './extension.js';
 import { URI } from 'vscode-uri';
 import * as openshift from './openshift.js';
+import * as sandbox from './sandbox.js';
 import * as kubeconfig from './kubeconfig.js';
 import { KubeConfig } from '@kubernetes/client-node';
 
@@ -46,7 +47,7 @@ vi.mock('got', () => ({
     if (url.includes('users')) {
       return {
         statusCode: 200,
-        body: JSON.stringify({ kind: 'User', metadata: { name: 'username' } }),
+        body: JSON.stringify({ kind: 'User', metadata: { name: 'system:serviceaccount:username-dev:pipeline' } }),
       };
     } else {
       return {
@@ -85,11 +86,23 @@ suite('kubernetes provider connection factory', () => {
       }),
     } as any as podmanDesktopApi.Provider;
     vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+    vi.spyOn(podmanDesktopApi.authentication, 'getSession').mockResolvedValue({
+      id: '1',
+      accessToken: 'accessTokenString',
+      idToken: 'idTokenString',
+    } as unknown as podmanDesktopApi.AuthenticationSession);
     await extension.activate(context);
     const connectionFactory = vi.mocked(providerMock.setKubernetesProviderConnectionFactory).mock.calls[0][0];
     let verificationError: Error;
     try {
-      vi.spyOn(openshift, 'whoami').mockResolvedValue('username');
+      vi.spyOn(sandbox, 'createSandboxAPI').mockReturnValue({
+        getSignUpStatus: vi.fn().mockResolvedValue({
+          apiEndpoint: 'https//:sandbox-host-url',
+          username: 'username',
+        }),
+      });
+      vi.spyOn(openshift, 'getPipelineServiceAccountToken').mockResolvedValue('token');
+      vi.spyOn(openshift, 'whoami').mockResolvedValue('system:serviceaccount:username-dev:pipeline');
       vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockReturnValue(config);
       vi.spyOn(kubeconfig, 'exportToFile').mockImplementation(vi.fn());
       await connectionFactory.create(params);
@@ -109,36 +122,35 @@ suite('kubernetes provider connection factory', () => {
     expect(verificationError.message).is.equal('Context name is required.');
   });
 
-  test('verifies login command is not empty', async () => {
-    const { error: verificationError } = await callCreate({
-      'redhat.sandbox.context.name': 'contextName',
-      'redhat.sandbox.login.command': '',
-    });
-    expect(verificationError).toBeDefined();
-    expect(verificationError.message).is.equal('Login command is required.');
-  });
+  // test('verifies login command is not empty', async () => {
+  //   const { error: verificationError } = await callCreate({
+  //     'redhat.sandbox.context.name': 'contextName',
+  //     'redhat.sandbox.login.command': '',
+  //   });
+  //   expect(verificationError).toBeDefined();
+  //   expect(verificationError.message).is.equal('Login command is required.');
+  // });
 
-  test('verifies login command has --server and --token options', async () => {
-    const results = await Promise.all(
-      ['oc login', 'oc login --server=https://server', 'oc login --token=token_text'].map(loginCommand =>
-        callCreate({
-          'redhat.sandbox.context.name': 'contextName',
-          'redhat.sandbox.login.command': loginCommand,
-        }),
-      ),
-    );
-    expect(results).toHaveLength(3);
-    results.forEach(result => {
-      expect(result.error.message).toBe('Login command is invalid or missing required options --server and --token.');
-    });
-  });
+  // test('verifies login command has --server and --token options', async () => {
+  //   const results = await Promise.all(
+  //     ['oc login', 'oc login --server=https://server', 'oc login --token=token_text'].map(loginCommand =>
+  //       callCreate({
+  //         'redhat.sandbox.context.name': 'contextName',
+  //         'redhat.sandbox.login.command': loginCommand,
+  //       }),
+  //     ),
+  //   );
+  //   expect(results).toHaveLength(3);
+  //   results.forEach(result => {
+  //     expect(result.error.message).toBe('Login command is invalid or missing required options --server and --token.');
+  //   });
+  // });
 
   test('creates new context for sandbox with specified url/token and sets it as default context', async () => {
     const config = new KubeConfig();
     const result = await callCreate(
       {
         'redhat.sandbox.context.name': 'contextName',
-        'redhat.sandbox.login.command': 'oc login --server=https://sandbox.openshift.com --token=base64_secret',
         'redhat.sandbox.context.default': true,
       },
       config,
@@ -190,7 +202,7 @@ suite('kubernetes provider connection factory', () => {
         clusters: [
           {
             name: 'sandbox-cluster-5s99ck',
-            server: 'https://reqion.openshiftapps.com:6443',
+            server: 'https://region.openshiftapps.com:6443',
             skipTLSVerify: false,
           },
         ],
