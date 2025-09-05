@@ -115,7 +115,7 @@ async function installPipelineSecretToken(
   k8sApi: CoreV1Api,
   pipelineServiceAccount: V1ServiceAccount,
   username: string,
-): Promise<V1Secret> {
+): Promise<V1Secret | undefined> {
   const v1Secret = {
     apiVersion: 'v1',
     kind: 'Secret',
@@ -130,12 +130,10 @@ async function installPipelineSecretToken(
   } as V1Secret;
 
   try {
-    await k8sApi.createNamespacedSecret({ namespace: `${username}-dev`, body: v1Secret });
-  } catch {
-    // Ignore
+    return k8sApi.createNamespacedSecret({ namespace: `${username}-dev`, body: v1Secret });
+  } catch (error) {
+    throw new Error(`Error when creating new Developer Sandbox connection: ${String(error)}`);
   }
-  const newSecrets = await k8sApi.listNamespacedSecret({ namespace: `${username}-dev` });
-  return newSecrets?.items.find(secret => secret.metadata.name === `pipeline-secret-${username}-dev`);
 }
 
 export async function getPipelineServiceAccountToken(
@@ -150,15 +148,16 @@ export async function getPipelineServiceAccountToken(
     serviceAccount => serviceAccount.metadata.name === 'pipeline',
   );
   if (!pipelineServiceAccount) {
-    return;
+    throw new Error(`Could not find service account required to create Developer Sandbox connection.`);
   }
 
   const secrets = await k8sApi.listNamespacedSecret({ namespace: `${username}-dev` });
   let pipelineTokenSecret = secrets?.items.find(secret => secret.metadata.name === `pipeline-secret-${username}-dev`);
   if (!pipelineTokenSecret) {
-    pipelineTokenSecret = await installPipelineSecretToken(k8sApi, pipelineServiceAccount, username);
-    if (!pipelineTokenSecret) {
-      return;
+    try {
+      pipelineTokenSecret = await installPipelineSecretToken(k8sApi, pipelineServiceAccount, username);
+    } catch (error) {
+      throw new Error(`Error when creating OpenShift secret for Developer Sandbox connection: ${String(error)}`);
     }
   }
   return Buffer.from(pipelineTokenSecret.data.token, 'base64').toString();

@@ -16,13 +16,12 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-import { CoreV1Api, KubeConfig } from '@kubernetes/client-node';
+import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
 import { getOpenShiftInternalRegistryPublicHost, getPipelineServiceAccountToken, whoami } from './openshift.js';
-import { createSandboxAPI, getDevSandboxSignUpStatus, SBSignupResponse } from './sandbox.js';
-import { sign } from 'crypto';
+import { getSignUpStatus, SBSignupResponse, signUp } from './sandbox.js';
 
 const ProvideDisplayName = 'Developer Sandbox';
 
@@ -169,6 +168,48 @@ async function registerConnection(contextName: string, apiURL: string, token: st
   return connectionData;
 }
 
+export async function getDevSandboxSignUpStatus(idToken: string): Promise<SBSignupResponse> {
+  let status: SBSignupResponse;
+  try {
+    status = await getSignUpStatus(idToken);
+  } catch (error) {
+    // User has not signed up for Developer Sandbox instance
+    console.error(`Could not get Developer Sandbox status. Sending sign up request for new instance.`);
+  }
+
+  if (!status) {
+    // If status is undefined, attempt to activate the Developer Sandbox
+    let signUpResult: boolean = false;
+    signUpResult = await signUp(idToken); // Try to activate it
+    if (signUpResult) {
+      // If it is activated successfully, get status again
+      status = await getSignUpStatus(idToken);
+    } else {
+      throw new Error('Could not sign you up for Developer Sandbox. Please try again later.');
+    }
+    if (!status) {
+      // If there is still no status, report an error
+      throw new Error('Could not get status for Developer Sandbox instance. Please try again later.');
+    }
+  }
+
+  if (!status.status.ready) {
+    // If Developer Sandbox is not ready
+    if (status.status.verificationRequired) {
+      throw new Error(
+        'Developer Sandbox account verification is required. Please open Developer Sandbox page using link below and click `Try it` button to go through verification process.',
+      );
+    } else {
+      if (status.status.reason === 'PendingApproval') {
+        throw new Error('Developer Sandbox instance provisioning is waiting for approval. Please try again later.');
+      } else {
+        throw new Error('Developer Sandbox is not provisioned yet. Please try again later.');
+      }
+    }
+  }
+  return status;
+}
+
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
   console.log('starting extension redhat-developer-sandbox');
 
@@ -221,24 +262,28 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       if (!params[ContextNameParam]) {
         throw new Error('Context name is required.');
       }
-      const ssoSession = await extensionApi.authentication.getSession('redhat.authentication-provider', ['openid'], {
-        createIfNone: true,
-      });
 
-      let status: SBSignupResponse = await getDevSandboxSignUpStatus((ssoSession as any).idToken);
-
-      const token = await getPipelineServiceAccountToken(
-        status.proxyURL,
-        status.compliantUsername,
-        (ssoSession as any).idToken,
-      );
-
-      // add cluster to kubeconfig
+      // first verify context name does not exists yet in kubeconfig
       const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
 
       if (config['contexts'].find(context => context['name'] === params[ContextNameParam])) {
         throw new Error(`Context ${params[ContextNameParam]} already exists, please choose a different name.`);
       }
+
+      // use existing SSO session or request to login
+      const ssoSession = await extensionApi.authentication.getSession('redhat.authentication-provider', ['openid'], {
+        createIfNone: true,
+      });
+
+      // check Developer Sandbox status and sign up for it if possible
+      let status: SBSignupResponse = await getDevSandboxSignUpStatus((ssoSession as any).idToken);
+
+      // get pipeline service account token or create new one
+      const token = await getPipelineServiceAccountToken(
+        status.proxyURL,
+        status.compliantUsername,
+        (ssoSession as any).idToken,
+      );
 
       const suffix = Math.random().toString(36).substring(7);
 

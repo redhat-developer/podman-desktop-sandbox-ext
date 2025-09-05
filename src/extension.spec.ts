@@ -49,7 +49,7 @@ vi.mock('got', () => ({
         statusCode: 200,
         body: JSON.stringify({ kind: 'User', metadata: { name: 'system:serviceaccount:username-dev:pipeline' } }),
       };
-    } else {
+    } else if (url.includes('imagestreams')) {
       return {
         statusCode: 200,
         body: JSON.stringify({ items: [{ status: { publicDockerImageRepository: 'registry-host' } }] }),
@@ -57,6 +57,14 @@ vi.mock('got', () => ({
     }
   }),
 }));
+vi.mock(import('./sandbox.js'), async importOriginal => {
+  const original = await importOriginal();
+  return {
+    ...original,
+    getSignUpStatus: vi.fn(),
+    signUp: vi.fn(),
+  };
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -73,7 +81,7 @@ test('kubernetes provider connection factory is set during activation', async ()
   await extension.activate(context);
   expect(providerMock.setKubernetesProviderConnectionFactory).toBeCalled();
 });
-``;
+
 suite('kubernetes provider connection factory', () => {
   async function callCreate(
     params: { [key: string]: any } = {},
@@ -95,12 +103,13 @@ suite('kubernetes provider connection factory', () => {
     const connectionFactory = vi.mocked(providerMock.setKubernetesProviderConnectionFactory).mock.calls[0][0];
     let verificationError: Error;
     try {
-      vi.spyOn(sandbox, 'createSandboxAPI').mockReturnValue({
-        getSignUpStatus: vi.fn().mockResolvedValue({
-          apiEndpoint: 'https//:sandbox-host-url',
-          username: 'username',
-        }),
-      });
+      vi.mocked(sandbox.getSignUpStatus).mockResolvedValue({
+        apiEndpoint: 'https//:sandbox-host-url',
+        username: 'username',
+        status: {
+          ready: true,
+        },
+      } as unknown as sandbox.SBSignupResponse);
       vi.spyOn(openshift, 'getPipelineServiceAccountToken').mockResolvedValue('token');
       vi.spyOn(openshift, 'whoami').mockResolvedValue('system:serviceaccount:username-dev:pipeline');
       vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockReturnValue(config);
@@ -121,30 +130,6 @@ suite('kubernetes provider connection factory', () => {
     expect(verificationError).toBeDefined();
     expect(verificationError.message).is.equal('Context name is required.');
   });
-
-  // test('verifies login command is not empty', async () => {
-  //   const { error: verificationError } = await callCreate({
-  //     'redhat.sandbox.context.name': 'contextName',
-  //     'redhat.sandbox.login.command': '',
-  //   });
-  //   expect(verificationError).toBeDefined();
-  //   expect(verificationError.message).is.equal('Login command is required.');
-  // });
-
-  // test('verifies login command has --server and --token options', async () => {
-  //   const results = await Promise.all(
-  //     ['oc login', 'oc login --server=https://server', 'oc login --token=token_text'].map(loginCommand =>
-  //       callCreate({
-  //         'redhat.sandbox.context.name': 'contextName',
-  //         'redhat.sandbox.login.command': loginCommand,
-  //       }),
-  //     ),
-  //   );
-  //   expect(results).toHaveLength(3);
-  //   results.forEach(result => {
-  //     expect(result.error.message).toBe('Login command is invalid or missing required options --server and --token.');
-  //   });
-  // });
 
   test('creates new context for sandbox with specified url/token and sets it as default context', async () => {
     const config = new KubeConfig();
@@ -171,7 +156,6 @@ suite('kubernetes provider connection factory', () => {
     await callCreate(
       {
         'redhat.sandbox.context.name': 'contextName',
-        'redhat.sandbox.login.command': 'oc login --server=https://sandbox.openshift.com --token=base64_secret',
         'redhat.sandbox.context.default': false,
       },
       config,
