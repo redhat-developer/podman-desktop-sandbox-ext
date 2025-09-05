@@ -37,7 +37,9 @@ module.exports = {
     tagImage: vi.fn(),
     pushImage: vi.fn(),
   },
-
+  authentication: {
+    getSession: vi.fn(),
+  },
   kubernetes: {
     getKubeconfig: vi.fn(),
   },
@@ -62,5 +64,7 @@ module.exports = {
   ProgressLocation: {
     TASK_WIDGET: 'task',
   }
+
+  
 };
 
