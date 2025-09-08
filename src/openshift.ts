@@ -20,6 +20,8 @@ import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
 import * as extensionApi from '@podman-desktop/api';
 import { CoreV1Api, KubeConfig, V1Secret, V1ServiceAccount } from '@kubernetes/client-node';
+import { getRegistrationServiceTimeout } from './sandbox.js';
+import { delay } from './utils.js';
 
 export interface InternalRegistryInfo {
   host: string;
@@ -129,10 +131,26 @@ async function installPipelineSecretToken(
     type: 'kubernetes.io/service-account-token',
   } as V1Secret;
 
-  try {
-    return k8sApi.createNamespacedSecret({ namespace: `${username}-dev`, body: v1Secret });
-  } catch (error) {
-    throw new Error(`Error when creating new Developer Sandbox connection: ${String(error)}`);
+  await k8sApi.createNamespacedSecret({ namespace: `${username}-dev`, body: v1Secret });
+  // wait for secret to be created
+  const timeout = getRegistrationServiceTimeout();
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeout) {
+    try {
+      const response = await k8sApi.readNamespacedSecret({
+        name: v1Secret.metadata.name,
+        namespace: `${username}-dev`,
+      });
+      return response; // Return the Secret object if found
+    } catch (error) {
+      if (error.response && error.response.statusCode === 404) {
+        console.error(`Cannot read created sandbox secret ${v1Secret.metadata.name}`);
+        await delay(250);
+      } else {
+        console.error(String(error));
+        throw error;
+      }
+    }
   }
 }
 
@@ -148,7 +166,7 @@ export async function getPipelineServiceAccountToken(
     serviceAccount => serviceAccount.metadata.name === 'pipeline',
   );
   if (!pipelineServiceAccount) {
-    throw new Error(`Could not find service account required to create Developer Sandbox connection.`);
+    throw new Error(`Couldn't find service account required to create Developer Sandbox connection.`);
   }
 
   const secrets = await k8sApi.listNamespacedSecret({ namespace: `${username}-dev` });
@@ -157,7 +175,7 @@ export async function getPipelineServiceAccountToken(
     try {
       pipelineTokenSecret = await installPipelineSecretToken(k8sApi, pipelineServiceAccount, username);
     } catch (error) {
-      throw new Error(`Error when creating OpenShift secret for Developer Sandbox connection: ${String(error)}`);
+      throw new Error(`An error occurred when creating secret for Developer Sandbox connection.`);
     }
   }
   return Buffer.from(pipelineTokenSecret.data.token, 'base64').toString();

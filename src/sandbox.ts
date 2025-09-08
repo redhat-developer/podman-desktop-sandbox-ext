@@ -4,6 +4,7 @@
  *-----------------------------------------------------------------------------------------------*/
 
 import got, { Delays } from 'got';
+import { configuration } from '@podman-desktop/api';
 
 // eslint-disable-next-line no-shadow
 export enum SBAPIEndpoint {
@@ -56,13 +57,17 @@ export interface OauthServerInfo {
 }
 
 export function getSandboxAPIUrl(): string {
-  return 'https://registration-service-toolchain-host-operator.apps.sandbox.x8i5.p1.openshiftapps.com';
+  return configuration.getConfiguration('redhat').get('sandbox.registrationServiceUrl');
 }
 
-export function getSandboxAPITimeout(): Delays {
+export function getRegistrationServiceTimeout(): number {
+  return configuration.getConfiguration('redhat').get<number>('sandbox.registrationServiceTimeout', 30) * 1000;
+}
+
+function createSandboxAPITimeout(): Delays {
   return {
-    response: 30000,
-    request: 30000,
+    response: getRegistrationServiceTimeout(),
+    request: getRegistrationServiceTimeout(),
   };
 }
 
@@ -72,18 +77,17 @@ export async function getSignUpStatus(token: string): Promise<SBSignupResponse |
       Authorization: `Bearer ${token}`,
     },
     responseType: 'json',
-    timeout: getSandboxAPITimeout(),
+    timeout: createSandboxAPITimeout(),
   });
-  return signupResponse.ok ? (signupResponse.body as Promise<SBSignupResponse>) : undefined;
+  return signupResponse.body as Promise<SBSignupResponse>;
 }
 
-export async function signUp(token: string): Promise<boolean> {
-  const signupResponse = await got(`${getSandboxAPIUrl()}${SBAPIEndpoint.SIGNUP}`, {
+export async function signUp(token: string): Promise<void> {
+  await got(`${getSandboxAPIUrl()}${SBAPIEndpoint.SIGNUP}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    timeout: getSandboxAPITimeout(),
+    timeout: createSandboxAPITimeout(),
   });
-  return signupResponse.ok;
 }

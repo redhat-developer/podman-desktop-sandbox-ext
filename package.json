@@ -32,6 +32,17 @@
           "default": false,
           "scope": "KubernetesProviderConnectionFactory",
           "description": "Set as current context"
+        },
+        "redhat.sandbox.registrationServiceUrl" : {
+          "type": "string",
+          "default": "https://registration-service-toolchain-host-operator.apps.sandbox.x8i5.p1.openshiftapps.com",
+          "description": "Developer Sandbox Registration Service URL"
+        },
+        "redhat.sandbox.registrationServiceTimeout" : {
+          "type": "number",
+          "minimum": 0,
+          "default": "30",
+          "description": "Developer Sandbox Registration Service timeout (seconds)"
         }
       }
     },

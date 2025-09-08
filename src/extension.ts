@@ -20,7 +20,7 @@ import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
-import { getOpenShiftInternalRegistryPublicHost, getPipelineServiceAccountToken, whoami } from './openshift.js';
+import { getOpenShiftInternalRegistryPublicHost, getPipelineServiceAccountToken } from './openshift.js';
 import { getSignUpStatus, SBSignupResponse, signUp } from './sandbox.js';
 
 const ProvideDisplayName = 'Developer Sandbox';
@@ -173,23 +173,25 @@ export async function getDevSandboxSignUpStatus(idToken: string): Promise<SBSign
   try {
     status = await getSignUpStatus(idToken);
   } catch (error) {
-    // User has not signed up for Developer Sandbox instance
-    console.error(`Could not get Developer Sandbox status. Sending sign up request for new instance.`);
+    // User has not signed up for Developer Sandbox trial
+    console.error(`Couldn't get Developer Sandbox status. Sending sign up request for a trial.`);
   }
 
   if (!status) {
-    // If status is undefined, attempt to activate the Developer Sandbox
-    let signUpResult: boolean = false;
-    signUpResult = await signUp(idToken); // Try to activate it
-    if (signUpResult) {
-      // If it is activated successfully, get status again
-      status = await getSignUpStatus(idToken);
-    } else {
-      throw new Error('Could not sign you up for Developer Sandbox. Please try again later.');
+    // If status is undefined, attempt to activate the Developer Sandbox trial
+    try {
+      await signUp(idToken); // Try to activate it
+    } catch (error) {
+      throw new Error(
+        `There is no active Developer Sandbox instance and sign up request for a trial failed: ${String(error)}`,
+      );
     }
-    if (!status) {
-      // If there is still no status, report an error
-      throw new Error('Could not get status for Developer Sandbox instance. Please try again later.');
+    try {
+      status = await getSignUpStatus(idToken);
+    } catch (error) {
+      throw new Error(
+        `Couldn't get Developer Sandbox status after successfully signing you up for a trial. Please try again later.: ${String(error)}`,
+      );
     }
   }
 
