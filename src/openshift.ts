@@ -19,6 +19,9 @@
 import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
 import * as extensionApi from '@podman-desktop/api';
+import { CoreV1Api, KubeConfig, V1Secret, V1ServiceAccount } from '@kubernetes/client-node';
+import { getRegistrationServiceTimeout } from './sandbox.js';
+import { delay } from './utils.js';
 
 export interface InternalRegistryInfo {
   host: string;
@@ -63,15 +66,117 @@ export async function getOpenShiftInternalRegistryPublicHost(contextName: string
         return responseObj.items[0].status.publicDockerImageRepository;
       }
     }
-    throw new Error('Could not detect internal Developer Sandbox image registry.');
+    throw new Error('Could not detect host name for internal Developer Sandbox image registry.');
   });
   const host = publicRegistry.substring(0, publicRegistry.indexOf('/'));
 
   const username: string = await whoami(cluster.server, user.token);
-
+  const matches = username.match(/^system:serviceaccount:([a-zA-Z-_.]+)-dev:pipeline$/);
+  if (!matches) {
+    throw new Error(`Cannot detect username for Developer Sandbox connection '${contextName}'.`);
+  }
   return {
     host,
-    username,
+    username: matches[1],
     token: user.token,
   };
+}
+
+export function prepareKubeConfig(
+  clusterName: string,
+  clusterUsername: string,
+  contextName: string,
+  server: string,
+  username: string,
+  accessToken: string,
+): KubeConfig {
+  const kcu = new KubeConfig();
+  const clusterProxy = {
+    name: clusterName,
+    server: server,
+    skipTLSVerify: false,
+  };
+  const user = {
+    name: clusterUsername,
+    token: accessToken,
+  };
+  const context = {
+    cluster: clusterProxy.name,
+    name: contextName,
+    user: user.name,
+    namespace: `${username}-dev`,
+  };
+  kcu.addCluster(clusterProxy);
+  kcu.addUser(user);
+  kcu.addContext(context);
+  kcu.setCurrentContext(context.name);
+  return kcu;
+}
+
+async function installPipelineSecretToken(
+  k8sApi: CoreV1Api,
+  pipelineServiceAccount: V1ServiceAccount,
+  username: string,
+): Promise<V1Secret | undefined> {
+  const v1Secret = {
+    apiVersion: 'v1',
+    kind: 'Secret',
+    metadata: {
+      name: `pipeline-secret-${username}-dev`,
+      annotations: {
+        'kubernetes.io/service-account.name': pipelineServiceAccount.metadata.name,
+        'kubernetes.io/service-account.uid': pipelineServiceAccount.metadata.uid,
+      },
+    },
+    type: 'kubernetes.io/service-account-token',
+  } as V1Secret;
+
+  await k8sApi.createNamespacedSecret({ namespace: `${username}-dev`, body: v1Secret });
+  // wait for secret to be created
+  const timeout = getRegistrationServiceTimeout();
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeout) {
+    try {
+      const response = await k8sApi.readNamespacedSecret({
+        name: v1Secret.metadata.name,
+        namespace: `${username}-dev`,
+      });
+      return response; // Return the Secret object if found
+    } catch (error) {
+      if (error.response && error.response.statusCode === 404) {
+        console.error(`Cannot read created sandbox secret ${v1Secret.metadata.name}`);
+        await delay(250);
+      } else {
+        console.error(String(error));
+        throw error;
+      }
+    }
+  }
+}
+
+export async function getPipelineServiceAccountToken(
+  proxy: string,
+  username: string,
+  idToken: string,
+): Promise<string> {
+  const kcu = prepareKubeConfig('sandbox-proxy', 'sso-user', 'sandbox-proxy-context', proxy, username, idToken);
+  const k8sApi = kcu.makeApiClient(CoreV1Api);
+  const serviceAccounts = await k8sApi.listNamespacedServiceAccount({ namespace: `${username}-dev` });
+  const pipelineServiceAccount = serviceAccounts.items.find(
+    serviceAccount => serviceAccount.metadata.name === 'pipeline',
+  );
+  if (!pipelineServiceAccount) {
+    throw new Error(`Couldn't find service account required to create Developer Sandbox connection.`);
+  }
+
+  const secrets = await k8sApi.listNamespacedSecret({ namespace: `${username}-dev` });
+  let pipelineTokenSecret = secrets?.items.find(secret => secret.metadata.name === `pipeline-secret-${username}-dev`);
+  if (!pipelineTokenSecret) {
+    try {
+      pipelineTokenSecret = await installPipelineSecretToken(k8sApi, pipelineServiceAccount, username);
+    } catch (error) {
+      throw new Error(`An error occurred when creating secret for Developer Sandbox connection.`);
+    }
+  }
+  return Buffer.from(pipelineTokenSecret.data.token, 'base64').toString();
 }

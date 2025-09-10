@@ -20,8 +20,8 @@ import { KubeConfig } from '@kubernetes/client-node';
 import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
-import { getOpenShiftInternalRegistryPublicHost, whoami } from './openshift.js';
-import { type IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { getOpenShiftInternalRegistryPublicHost, getPipelineServiceAccountToken } from './openshift.js';
+import { getSignUpStatus, SBSignupResponse, signUp } from './sandbox.js';
 
 const ProvideDisplayName = 'Developer Sandbox';
 
@@ -168,6 +168,50 @@ async function registerConnection(contextName: string, apiURL: string, token: st
   return connectionData;
 }
 
+export async function getDevSandboxSignUpStatus(idToken: string): Promise<SBSignupResponse> {
+  let status: SBSignupResponse;
+  try {
+    status = await getSignUpStatus(idToken);
+  } catch (error) {
+    // User has not signed up for Developer Sandbox trial
+    console.error(`Couldn't get Developer Sandbox status. Sending sign up request for a trial.`);
+  }
+
+  if (!status) {
+    // If status is undefined, attempt to activate the Developer Sandbox trial
+    try {
+      await signUp(idToken); // Try to activate it
+    } catch (error) {
+      throw new Error(
+        `There is no active Developer Sandbox instance and sign up request for a trial failed: ${String(error)}`,
+      );
+    }
+    try {
+      status = await getSignUpStatus(idToken);
+    } catch (error) {
+      throw new Error(
+        `Couldn't get Developer Sandbox status after successfully signing you up for a trial. Please try again later.: ${String(error)}`,
+      );
+    }
+  }
+
+  if (!status.status.ready) {
+    // If Developer Sandbox is not ready
+    if (status.status.verificationRequired) {
+      throw new Error(
+        'Developer Sandbox account verification is required. Please open Developer Sandbox page using link below and click `Try it` button to go through verification process.',
+      );
+    } else {
+      if (status.status.reason === 'PendingApproval') {
+        throw new Error('Developer Sandbox instance provisioning is waiting for approval. Please try again later.');
+      } else {
+        throw new Error('Developer Sandbox is not provisioned yet. Please try again later.');
+      }
+    }
+  }
+  return status;
+}
+
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
   console.log('starting extension redhat-developer-sandbox');
 
@@ -221,37 +265,35 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
         throw new Error('Context name is required.');
       }
 
-      // get form parameters
-      const loginCommand: string = params[LoginCommandParam];
-      if (loginCommand.trim().length === 0) {
-        throw new Error('Login command is required.');
-      }
-
-      const apiURLMatch = loginCommand.match(/--server=([^\s]*)/);
-      const tokenMatch = loginCommand.match(/--token=([^\s]*)/);
-
-      if (!apiURLMatch || !tokenMatch) {
-        throw new Error('Login command is invalid or missing required options --server and --token.');
-      }
-
-      const apiURL = apiURLMatch[1];
-      const token = tokenMatch[1];
-
-      // add cluster to kubeconfig
+      // first verify context name does not exists yet in kubeconfig
       const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
 
       if (config['contexts'].find(context => context['name'] === params[ContextNameParam])) {
         throw new Error(`Context ${params[ContextNameParam]} already exists, please choose a different name.`);
       }
 
+      // use existing SSO session or request to login
+      const ssoSession = await extensionApi.authentication.getSession('redhat.authentication-provider', ['openid'], {
+        createIfNone: true,
+      });
+
+      // check Developer Sandbox status and sign up for it if possible
+      let status: SBSignupResponse = await getDevSandboxSignUpStatus((ssoSession as any).idToken);
+
+      // get pipeline service account token or create new one
+      const token = await getPipelineServiceAccountToken(
+        status.proxyURL,
+        status.compliantUsername,
+        (ssoSession as any).idToken,
+      );
+
       const suffix = Math.random().toString(36).substring(7);
 
       const clusterName = `sandbox-cluster-${suffix}`; // has unique name
       const userName = `sandbox-user-${suffix}`; // generate a unique name for the user
-      const username: string = await whoami(apiURL, token);
 
       config.addCluster({
-        server: apiURL,
+        server: status.apiEndpoint,
         name: clusterName,
         skipTLSVerify: false,
       });
@@ -263,16 +305,15 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
         cluster: clusterName,
         user: userName,
         name: params[ContextNameParam],
-        namespace: `${username}-dev`,
+        namespace: `${status.compliantUsername}-dev`,
       });
-
       if (params[DefaultContextParam]) {
         config.setCurrentContext(params[ContextNameParam]);
       }
 
       kubeconfig.exportToFile(config, kubeconfigFile);
 
-      await registerConnection(params[ContextNameParam], apiURL, token);
+      await registerConnection(params[ContextNameParam], status.apiEndpoint, token);
     },
     creationDisplayName: ProvideDisplayName,
   });
