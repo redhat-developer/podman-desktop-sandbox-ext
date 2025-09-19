@@ -18,7 +18,7 @@
         "redhat.sandbox.form.description": {
           "type": "markdown",
           "scope": "KubernetesProviderConnectionFactory",
-          "markdownDescription": "You will need to log into your Developer Sandbox in an external browser:\n\n:button[Log into Developer Sandbox]{command=sandbox.open.login.url href=\"https://developers.redhat.com/developer-sandbox/?sc_cid=7013a000003SUmgAAG\"}\n\nFrom your Developer Sandbox Console, click on your login name in the upper right corner and select 'Copy login command' from the menu. Copy full login command from browser page and paste it in the 'Login command' field below."
+          "markdownDescription": "You will need to sign in with Red Hat SSO into your Developer account. If Developer Sandbox is not activated, please [open Developer Sandbox page](https://sandbox.redhat.com/?sc_cid=7013a000003SUmgAAG) in your browser and click 'Try it' button in OpenShift box."
         },
         "redhat.sandbox.context.name": {
           "type": "string",
@@ -33,12 +33,16 @@
           "scope": "KubernetesProviderConnectionFactory",
           "description": "Set as current context"
         },
-        "redhat.sandbox.login.command": {
+        "redhat.sandbox.registrationServiceUrl" : {
           "type": "string",
-          "default": "",
-          "scope": "KubernetesProviderConnectionFactory",
-          "description": "Login command from Developer Console",
-          "placeholder": "oc login --token=<token> --server=<url>"
+          "default": "https://registration-service-toolchain-host-operator.apps.sandbox.x8i5.p1.openshiftapps.com",
+          "description": "Developer Sandbox Registration Service URL"
+        },
+        "redhat.sandbox.registrationServiceTimeout" : {
+          "type": "number",
+          "minimum": 0,
+          "default": "30",
+          "description": "Developer Sandbox Registration Service timeout (seconds)"
         }
       }
     },
