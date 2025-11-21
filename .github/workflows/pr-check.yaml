@@ -27,7 +27,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.0
 
       - uses: actions/setup-node@v6
         with:
@@ -60,7 +60,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.0
 
       - uses: actions/setup-node@v6
         with:
@@ -90,7 +90,7 @@ jobs:
     name: Linux
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.0
       - uses: actions/setup-node@v6
         with:
           node-version: 20
@@ -118,7 +118,7 @@ jobs:
     name: linter, formatters and unit tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.0
       - uses: actions/setup-node@v6
         with:
           node-version: 20
@@ -150,7 +150,7 @@ jobs:
     env:
       SKIP_INSTALLATION: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.0
         with: 
           path: podman-desktop-sandbox-ext
 
@@ -160,7 +160,7 @@ jobs:
           node-version: 20
 
       # Checkout podman desktop
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.0
         with:
           repository: containers/podman-desktop
           ref: main
