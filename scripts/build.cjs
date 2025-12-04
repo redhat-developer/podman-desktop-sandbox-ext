@@ -17,7 +17,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-const zipper = require('zip-local');
+const { zip } = require('zip-a-folder');
 const path = require('path');
 const packageJson = require('../package.json');
 const { mkdirp } = require('mkdirp');
@@ -58,6 +58,6 @@ byline(fileStream)
         throw new Error('Error copying files', error);
       }
       console.log(`Zipping files to ${destFile}`);
-      zipper.sync.zip(zipDirectory).compress().save(destFile);
+      zip(zipDirectory,destFile);
     });
   });
