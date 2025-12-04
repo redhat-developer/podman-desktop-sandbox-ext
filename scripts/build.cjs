@@ -58,6 +58,6 @@ byline(fileStream)
         throw new Error('Error copying files', error);
       }
       console.log(`Zipping files to ${destFile}`);
-      zip(zipDirectory,destFile);
+      zip(zipDirectory, destFile);
     });
   });
