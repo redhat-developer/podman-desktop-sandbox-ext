@@ -16,13 +16,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 FROM registry.access.redhat.com/ubi10/nodejs-22-minimal:10.1-1764649415
-# change home directory to be at /opt/app-root
-ENV HOME=/opt/app-root
 
-# copy the application files to the /opt/app-root/extension-source directory
-WORKDIR ${HOME}/extension-source
-RUN mkdir -p ${HOME}/extension-source
-COPY package.json yarn.lock ${HOME}/extension-source/
+ENV EXTENSION_SRC=/opt/app-root/extension-source
+RUN mkdir -p $EXTENSION_SRC
+WORKDIR $EXTENSION_SRC
 
+COPY yarn.lock package.json .
 RUN npm install --global yarn && \
     yarn --frozen-lockfile install
