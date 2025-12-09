@@ -222,7 +222,7 @@ jobs:
           podman build -t local_sso_image ./
           CONTAINER_ID=$(podman create localhost/local_sso_image --entrypoint "")
           mkdir -p tests/playwright/output/sandbox-tests-pd/plugins
-          podman export $CONTAINER_ID | tar -x -C tests/playwright/output/sandbox-tests-pd/plugins/
+          podman export $CONTAINER_ID | tar -x -C ../podman-desktop-sandbox-ext/tests/playwright/output/sandbox-tests-pd/plugins/
           podman rm -f $CONTAINER_ID
           podman rmi -f localhost/local_sso_image:latest
 
