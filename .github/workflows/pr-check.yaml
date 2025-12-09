@@ -229,7 +229,8 @@ jobs:
       - name: Delete Electron resources folder before E2E tests
         working-directory: ./podman-desktop-sandbox-ext
         run: |
-          rm -rf tests/playwright/output/sandbox-tests-pd/plugins/extension/node_modules/electron/dist/resources
+          rm -rf tests/playwright/output/sandbox-tests-pd/plugins/sandbox-extension/node_modules/electron/dist/resources
+          ls -la tests/playwright/output/sandbox-tests-pd/plugins/
 
       - name: Run E2E tests
         working-directory: ./podman-desktop-sandbox-ext
