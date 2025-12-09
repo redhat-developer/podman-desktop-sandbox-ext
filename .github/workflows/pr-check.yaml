@@ -151,22 +151,29 @@ jobs:
       SKIP_INSTALLATION: true
     steps:
       - uses: actions/checkout@v6.0.1
+        name: Checkout Developer Sandbox Extension
         with: 
           path: podman-desktop-sandbox-ext
 
-      # Install nodejs
+      - uses: actions/checkout@v6.0.1
+        name: Checkout Red Hat SSO Extension
+        with:
+          path: podman-desktop-redhat-account-ext
+          repository: redhat-developer/podman-desktop-redhat-account-ext
+          ref: main
+
       - uses: actions/setup-node@v6
+        name: Install nodejs 20
         with:
           node-version: 20
 
-      # Checkout podman desktop
       - uses: actions/checkout@v6.0.1
+        name: Checkout Podman Desktop
         with:
           repository: containers/podman-desktop
           ref: main
           path: podman-desktop
 
-      # Setup pnpm
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
@@ -204,14 +211,27 @@ jobs:
           CONTAINER_ID=$(podman create localhost/local_sandbox_image --entrypoint "")
           mkdir -p tests/playwright/output/sandbox-tests-pd/plugins
           podman export $CONTAINER_ID | tar -x -C tests/playwright/output/sandbox-tests-pd/plugins/
+          mv tests/playwright/output/sandbox-tests-pd/plugins/extension tests/playwright/output/sandbox-tests-pd/plugins/sandbox-extension
           podman rm -f $CONTAINER_ID
           podman rmi -f localhost/local_sandbox_image:latest
+      
+      - name: Build SSO extension from container file
+        working-directory: ./podman-desktop-redhat-account-ext
+        run: |
+          pnpm install && pnpm build
+          podman build -t local_sso_image ./
+          CONTAINER_ID=$(podman create localhost/local_sso_image --entrypoint "")
+          mkdir -p tests/playwright/output/sandbox-tests-pd/plugins
+          podman export $CONTAINER_ID | tar -x -C ../podman-desktop-sandbox-ext/tests/playwright/output/sandbox-tests-pd/plugins/
+          podman rm -f $CONTAINER_ID
+          podman rmi -f localhost/local_sso_image:latest
 
       - name: Delete Electron resources folder before E2E tests
         working-directory: ./podman-desktop-sandbox-ext
         run: |
-          rm -rf tests/playwright/output/sandbox-tests-pd/plugins/extension/node_modules/electron/dist/resources
-          
+          rm -rf tests/playwright/output/sandbox-tests-pd/plugins/sandbox-extension/node_modules/electron/dist/resources
+          ls -la tests/playwright/output/sandbox-tests-pd/plugins/
+
       - name: Run E2E tests
         working-directory: ./podman-desktop-sandbox-ext
         env:
