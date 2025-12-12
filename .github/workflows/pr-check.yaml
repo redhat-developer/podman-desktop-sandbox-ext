@@ -238,7 +238,7 @@ jobs:
           PODMAN_DESKTOP_ARGS: ${{ github.workspace }}/podman-desktop
         run: yarn test:e2e
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: e2e-tests
