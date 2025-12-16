@@ -9,15 +9,11 @@ Once installed, you can find the Sandbox resource added to the Resources setting
 
 ![1-sandbox-in-resource-settings](https://raw.githubusercontent.com/containers/podman-desktop-media/developer-sandbox/0.0.6/readme/327929183-133c684f-a09f-4aa4-8447-29e5700af51c.png)
 
-To configure kubernetes context for your Sandbox click on 'Create new ...' button to see Sandbox kubernetes context configuration form.
-
-![2-new-sandbox-form-annotated](https://raw.githubusercontent.com/containers/podman-desktop-media/developer-sandbox/0.0.6/readme/327929197-80e22375-7d69-43cb-ad06-4dd1dd1777ea.png)
-
-Follow the description on top of the form to copy a login command from Sandbox Developer Console to `Login command from Developer Console` field. Then set desired kubernetes context name in corresponding field and press `Create` button.
+To configure the Kubernetes context for your sandbox, click the `Create new...` button to open the sandbox Kubernetes context configuration form. Use the default context name `dev-sandbox-context`, or change it to any name you prefer, and then click `Create`. If you have not yet signed in to your Red Hat Developer account, you will see a request to sign in with Red Hat SSO.
 
 ![3-new-sandbox-form](https://raw.githubusercontent.com/containers/podman-desktop-media/developer-sandbox/0.0.6/readme/327929217-fc1cb010-4f86-46c6-853f-428c73f4544e.png)
 
-There should be new Sandbox connection in 'running' state in Sandbox section after that.
+After that, you should see a new sandbox connection in Running state in the Sandbox section. If you see the message `Developer Sandbox account verification is required`, follow the instructions at the top of the `Create Developer Sandbox` page and try again.
 
 ![4-sandbox-connection-created](https://raw.githubusercontent.com/containers/podman-desktop-media/developer-sandbox/0.0.6/readme/327929224-45082f01-5cb7-4087-be31-d6ca8152f527.png)
 
