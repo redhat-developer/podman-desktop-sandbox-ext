@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-FROM ghcr.io/redhat-developer/podman-desktop-sandbox-ext-builder:latest as builder
+FROM ghcr.io/redhat-developer/podman-desktop-sandbox-ext-builder:next as builder
 
 COPY --chown=1001:root . .
 RUN yarn install && yarn build
