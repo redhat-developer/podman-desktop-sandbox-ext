@@ -203,11 +203,11 @@ jobs:
         working-directory: ./podman-desktop-sandbox-ext
         run: yarn install
       
-      - name: Build Sandbox extension from container file
+      - name: Build Sandbox extension from container file and install SSO dependency
         working-directory: ./podman-desktop-sandbox-ext
         run: |
-          yarn build
-          podman build -t local_sandbox_image ./
+          podman build -t ghcr.io/${{ github.repository_owner }}/podman-desktop-sandbox-ext-builder:next . -f ./build/Containerfile.builder
+          podman build -t local_sandbox_image ./ -f ./build/Containerfile
           CONTAINER_ID=$(podman create localhost/local_sandbox_image --entrypoint "")
           mkdir -p tests/playwright/output/sandbox-tests-pd/plugins
           podman export $CONTAINER_ID | tar -x -C tests/playwright/output/sandbox-tests-pd/plugins/
@@ -215,16 +215,13 @@ jobs:
           podman rm -f $CONTAINER_ID
           podman rmi -f localhost/local_sandbox_image:latest
       
-      - name: Build SSO extension from container file
-        working-directory: ./podman-desktop-redhat-account-ext
-        run: |
-          pnpm install && pnpm build
-          podman build -t local_sso_image ./
-          CONTAINER_ID=$(podman create localhost/local_sso_image --entrypoint "")
+          # install sso extension
+          podman pull ghcr.io/redhat-developer/podman-desktop-redhat-account-ext:latest
+          CONTAINER_ID=$(podman create ghcr.io/redhat-developer/podman-desktop-redhat-account-ext --entrypoint "")
           mkdir -p tests/playwright/output/sandbox-tests-pd/plugins
           podman export $CONTAINER_ID | tar -x -C ../podman-desktop-sandbox-ext/tests/playwright/output/sandbox-tests-pd/plugins/
           podman rm -f $CONTAINER_ID
-          podman rmi -f localhost/local_sso_image:latest
+          podman rmi -f ghcr.io/redhat-developer/podman-desktop-redhat-account-ext:latest
 
       - name: Delete Electron resources folder before E2E tests
         working-directory: ./podman-desktop-sandbox-ext
