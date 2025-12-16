@@ -206,7 +206,7 @@ jobs:
       - name: Build Sandbox extension from container file and install SSO dependency
         working-directory: ./podman-desktop-sandbox-ext
         run: |
-          yarn build
+          podman build -t ghcr.io/${{ github.repository_owner }}/podman-desktop-sandbox-ext-builder:latest . -f ./build/Containerfile.builder
           podman build -t local_sandbox_image ./ -f ./build/Containerfile
           CONTAINER_ID=$(podman create localhost/local_sandbox_image --entrypoint "")
           mkdir -p tests/playwright/output/sandbox-tests-pd/plugins
