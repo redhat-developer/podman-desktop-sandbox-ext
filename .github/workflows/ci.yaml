@@ -57,5 +57,6 @@ jobs:
       - name: Build Image
         id: build-image
         run: |
-          podman build -t ghcr.io/${{ github.repository_owner }}/podman-desktop-sandbox-ext:latest .
+          podman build -t ghcr.io/${{ github.repository_owner }}/podman-desktop-sandbox-ext-builder:latest . -f ./build/Containerfile.builder
+          podman build -t ghcr.io/${{ github.repository_owner }}/podman-desktop-sandbox-ext:latest . -f ./build/Containerfile
           podman push ghcr.io/${{ github.repository_owner }}/podman-desktop-sandbox-ext:latest
