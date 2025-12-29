@@ -31,7 +31,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -64,7 +64,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -93,7 +93,7 @@ jobs:
       - uses: actions/checkout@v6.0.1
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -121,7 +121,7 @@ jobs:
       - uses: actions/checkout@v6.0.1
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -163,9 +163,9 @@ jobs:
           ref: main
 
       - uses: actions/setup-node@v6
-        name: Install nodejs 20
+        name: Install nodejs 24
         with:
-          node-version: 20
+          node-version: 24
 
       - uses: actions/checkout@v6.0.1
         name: Checkout Podman Desktop
