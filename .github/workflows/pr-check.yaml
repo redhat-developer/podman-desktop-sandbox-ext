@@ -27,7 +27,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
 
       - uses: actions/setup-node@v6
         with:
@@ -60,7 +60,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
 
       - uses: actions/setup-node@v6
         with:
@@ -90,7 +90,7 @@ jobs:
     name: Linux
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -118,7 +118,7 @@ jobs:
     name: linter, formatters and unit tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -150,12 +150,12 @@ jobs:
     env:
       SKIP_INSTALLATION: true
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
         name: Checkout Developer Sandbox Extension
         with: 
           path: podman-desktop-sandbox-ext
 
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
         name: Checkout Red Hat SSO Extension
         with:
           path: podman-desktop-redhat-account-ext
@@ -167,7 +167,7 @@ jobs:
         with:
           node-version: 24
 
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
         name: Checkout Podman Desktop
         with:
           repository: containers/podman-desktop
