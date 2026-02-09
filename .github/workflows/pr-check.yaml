@@ -149,6 +149,7 @@ jobs:
         name: Install pnpm
         with:
           run_install: false
+          package_json_file: podman-desktop-sandbox-ext/package.json
 
       - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         name: Install nodejs 24
