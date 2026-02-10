@@ -147,7 +147,7 @@ jobs:
         env:
           ELECTRON_ENABLE_INSPECT: true
         run: |
-          pnpm install
+          pnpm install --frozen-lockfile
           pnpm compile:current --linux dir
           path=$(realpath ./dist/linux-unpacked/podman-desktop)
           echo "Podman Desktop built binary: $path"
