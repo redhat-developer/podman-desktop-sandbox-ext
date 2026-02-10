@@ -181,7 +181,7 @@ jobs:
 
       - name: Execute pnpm in Sandbox extension
         working-directory: ./podman-desktop-sandbox-ext
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
       
       - name: Build Sandbox extension from container file and install SSO dependency
         working-directory: ./podman-desktop-sandbox-ext
