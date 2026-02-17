@@ -27,14 +27,14 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v6.0.2
 
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: pnpm/action-setup@v4.2.0
         name: Install pnpm
         with:
           run_install: false
 
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - uses: actions/setup-node@v6.2.0
         with:
           node-version: 24
           cache: 'pnpm'
@@ -53,14 +53,14 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v6.0.2
 
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: pnpm/action-setup@v4.2.0
         name: Install pnpm
         with:
           run_install: false
 
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - uses: actions/setup-node@v6.2.0
         with:
           node-version: 24
           cache: 'pnpm'
@@ -76,14 +76,14 @@ jobs:
     name: Linux
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v6.0.2
 
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: pnpm/action-setup@v4.2.0
         name: Install pnpm
         with:
           run_install: false
 
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - uses: actions/setup-node@v6.2.0
         with:
           node-version: 24
           cache: 'pnpm'
@@ -99,14 +99,14 @@ jobs:
     name: linter, formatters and unit tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v6.0.2
 
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: pnpm/action-setup@v4.2.0
         name: Install pnpm
         with:
           run_install: false
 
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - uses: actions/setup-node@v6.2.0
         with:
           node-version: 24
           cache: 'pnpm'
@@ -126,32 +126,32 @@ jobs:
     env:
       SKIP_INSTALLATION: true
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v6.0.2
         name: Checkout Developer Sandbox Extension
         with: 
           path: podman-desktop-sandbox-ext
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v6.0.2
         name: Checkout Red Hat SSO Extension
         with:
           path: podman-desktop-redhat-account-ext
           repository: redhat-developer/podman-desktop-redhat-account-ext
           ref: main
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v6.0.2
         name: Checkout Podman Desktop
         with:
           repository: containers/podman-desktop
           ref: main
           path: podman-desktop
 
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: pnpm/action-setup@v4.2.0
         name: Install pnpm
         with:
           run_install: false
           package_json_file: podman-desktop-sandbox-ext/package.json
 
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - uses: actions/setup-node@v6.2.0
         name: Install nodejs 24
         with:
           node-version: 24
@@ -215,7 +215,7 @@ jobs:
           PODMAN_DESKTOP_ARGS: ${{ github.workspace }}/podman-desktop
         run: pnpm test:e2e
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - uses: actions/upload-artifact@v6.0.0
         if: always()
         with:
           name: e2e-tests
