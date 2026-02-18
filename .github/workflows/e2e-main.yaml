@@ -84,7 +84,7 @@ jobs:
           ref: main
           path: podman-desktop
 
-      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19 # v4.1.0
         name: Install pnpm
         with:
           run_install: false
