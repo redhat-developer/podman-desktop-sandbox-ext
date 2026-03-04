@@ -34,7 +34,7 @@ jobs:
         with:
           run_install: false
 
-      - uses: actions/setup-node@v6.2.0
+      - uses: actions/setup-node@v6.3.0
         with:
           node-version: 24
           cache: 'pnpm'
@@ -60,7 +60,7 @@ jobs:
         with:
           run_install: false
 
-      - uses: actions/setup-node@v6.2.0
+      - uses: actions/setup-node@v6.3.0
         with:
           node-version: 24
           cache: 'pnpm'
@@ -83,7 +83,7 @@ jobs:
         with:
           run_install: false
 
-      - uses: actions/setup-node@v6.2.0
+      - uses: actions/setup-node@v6.3.0
         with:
           node-version: 24
           cache: 'pnpm'
@@ -106,7 +106,7 @@ jobs:
         with:
           run_install: false
 
-      - uses: actions/setup-node@v6.2.0
+      - uses: actions/setup-node@v6.3.0
         with:
           node-version: 24
           cache: 'pnpm'
@@ -151,7 +151,7 @@ jobs:
           run_install: false
           package_json_file: podman-desktop-sandbox-ext/package.json
 
-      - uses: actions/setup-node@v6.2.0
+      - uses: actions/setup-node@v6.3.0
         name: Install nodejs 24
         with:
           node-version: 24
