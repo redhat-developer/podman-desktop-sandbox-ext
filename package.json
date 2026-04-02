@@ -87,7 +87,7 @@
     "got": "^14.6.6"
   },
   "devDependencies": {
-    "@playwright/test": "1.58.2",
+    "@playwright/test": "1.59.1",
     "@podman-desktop/tests-playwright": "^1.26.1",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24",
