@@ -104,7 +104,7 @@
     "vscode-uri": "^3.1.0",
     "xvfb-maybe": "^0.2.1",
     "js-yaml": "^4.1.1",
-    "adm-zip": "^0.5.16"
+    "adm-zip": "^0.5.17"
   },
   "extensionDependencies": [
     "redhat.redhat-authentication"
