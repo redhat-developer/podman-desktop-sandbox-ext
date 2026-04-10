@@ -97,7 +97,7 @@
     "cross-env": "10.1.0",
     "jsdom": "^29.0.2",
     "mkdirp": "^3.0.1",
-    "prettier": "^3.8.1",
+    "prettier": "^3.8.2",
     "typescript": "^6.0.2",
     "vite": "^8.0.8",
     "vitest": "^4.0.15",
