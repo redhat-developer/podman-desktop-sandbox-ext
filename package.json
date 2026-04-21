@@ -84,7 +84,7 @@
     "@kubernetes/client-node": "^1.4.0",
     "@podman-desktop/api": "^1.26.2",
     "fs-extra": "^11.3.4",
-    "got": "^15.0.2"
+    "got": "^15.0.3"
   },
   "devDependencies": {
     "@playwright/test": "1.59.1",
