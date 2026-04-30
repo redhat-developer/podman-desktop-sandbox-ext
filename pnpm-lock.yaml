@@ -38,7 +38,7 @@ importers:
         version: 24.10.1
       '@vitest/coverage-v8':
         specifier: ^4.0.15
-        version: 4.0.17(vitest@4.0.17(@types/node@24.10.1)(jsdom@29.1.0)(lightningcss@1.32.0))
+        version: 4.0.17(vitest@4.0.17(@types/node@24.10.1)(jsdom@29.1.1)(lightningcss@1.32.0))
       adm-zip:
         specifier: ^0.5.17
         version: 0.5.17
@@ -55,8 +55,8 @@ importers:
         specifier: ^4.1.1
         version: 4.1.1
       jsdom:
-        specifier: ^29.1.0
-        version: 29.1.0
+        specifier: ^29.1.1
+        version: 29.1.1
       mkdirp:
         specifier: ^3.0.1
         version: 3.0.1
@@ -71,7 +71,7 @@ importers:
         version: 8.0.10(@types/node@24.10.1)(esbuild@0.27.2)
       vitest:
         specifier: ^4.0.15
-        version: 4.0.17(@types/node@24.10.1)(jsdom@29.1.0)(lightningcss@1.32.0)
+        version: 4.0.17(@types/node@24.10.1)(jsdom@29.1.1)(lightningcss@1.32.0)
       vscode-uri:
         specifier: ^3.1.0
         version: 3.1.0
@@ -1076,8 +1076,8 @@ packages:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
 
-  jsdom@29.1.0:
-    resolution: {integrity: sha512-YNUc7fB9QuvSSQWfrH0xF+TyABkxUwx8sswgIDaCrw4Hol8BghdZDkITtZheRJeMtzWlnTfsM3bBBusRvpO1wg==}
+  jsdom@29.1.1:
+    resolution: {integrity: sha512-ECi4Fi2f7BdJtUKTflYRTiaMxIB0O6zfR1fX0GXpUrf6flp8QIYn1UT20YQqdSOfk2dfkCwS8LAFoJDEppNK5Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24.0.0}
     peerDependencies:
       canvas: ^3.0.0
@@ -1463,11 +1463,11 @@ packages:
     resolution: {integrity: sha512-PSkbLUoxOFRzJYjjxHJt9xro7D+iilgMX/C9lawzVuYiIdcihh9DXmVibBe8lmcFrRi/VzlPjBxbN7rH24q8/Q==}
     engines: {node: '>=14.0.0'}
 
-  tldts-core@7.0.28:
-    resolution: {integrity: sha512-7W5Efjhsc3chVdFhqtaU0KtK32J37Zcr9RKtID54nG+tIpcY79CQK/veYPODxtD/LJ4Lue66jvrQzIX2Z2/pUQ==}
+  tldts-core@7.0.29:
+    resolution: {integrity: sha512-W99NuU7b1DcG3uJ3v9k9VztCH3WialNbBkBft5wCs8V8mexu0XQqaZEYb9l9RNNzK8+3EJ9PKWB0/RUtTQ/o+Q==}
 
-  tldts@7.0.28:
-    resolution: {integrity: sha512-+Zg3vWhRUv8B1maGSTFdev9mjoo8Etn2Ayfs4cnjlD3CsGkxXX4QyW3j2WJ0wdjYcYmy7Lx2RDsZMhgCWafKIw==}
+  tldts@7.0.29:
+    resolution: {integrity: sha512-JIXCerhudr/N6OWLwLF1HVsTTUo7ry6qHa5eWZEkiMuxsIiAACL55tGLfqfHfoH7QaMQUW8fngD7u7TxWexYQg==}
     hasBin: true
 
   tough-cookie@6.0.1:
@@ -2115,7 +2115,7 @@ snapshots:
     dependencies:
       '@types/node': 24.10.1
 
-  '@vitest/coverage-v8@4.0.17(vitest@4.0.17(@types/node@24.10.1)(jsdom@29.1.0)(lightningcss@1.32.0))':
+  '@vitest/coverage-v8@4.0.17(vitest@4.0.17(@types/node@24.10.1)(jsdom@29.1.1)(lightningcss@1.32.0))':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@vitest/utils': 4.0.17
@@ -2127,7 +2127,7 @@ snapshots:
       obug: 2.1.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.17(@types/node@24.10.1)(jsdom@29.1.0)(lightningcss@1.32.0)
+      vitest: 4.0.17(@types/node@24.10.1)(jsdom@29.1.1)(lightningcss@1.32.0)
 
   '@vitest/expect@4.0.17':
     dependencies:
@@ -2568,7 +2568,7 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsdom@29.1.0:
+  jsdom@29.1.1:
     dependencies:
       '@asamuzakjp/css-color': 5.1.11
       '@asamuzakjp/dom-selector': 7.1.1
@@ -2975,15 +2975,15 @@ snapshots:
 
   tinyrainbow@3.0.3: {}
 
-  tldts-core@7.0.28: {}
+  tldts-core@7.0.29: {}
 
-  tldts@7.0.28:
+  tldts@7.0.29:
     dependencies:
-      tldts-core: 7.0.28
+      tldts-core: 7.0.29
 
   tough-cookie@6.0.1:
     dependencies:
-      tldts: 7.0.28
+      tldts: 7.0.29
 
   tr46@0.0.3: {}
 
@@ -3037,7 +3037,7 @@ snapshots:
       esbuild: 0.27.2
       fsevents: 2.3.3
 
-  vitest@4.0.17(@types/node@24.10.1)(jsdom@29.1.0)(lightningcss@1.32.0):
+  vitest@4.0.17(@types/node@24.10.1)(jsdom@29.1.1)(lightningcss@1.32.0):
     dependencies:
       '@vitest/expect': 4.0.17
       '@vitest/mocker': 4.0.17(vite@7.3.2(@types/node@24.10.1)(lightningcss@1.32.0))
@@ -3061,7 +3061,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.10.1
-      jsdom: 29.1.0
+      jsdom: 29.1.1
     transitivePeerDependencies:
       - jiti
       - less

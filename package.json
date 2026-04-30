@@ -95,7 +95,7 @@
     "byline": "^5.0.0",
     "copyfiles": "^2.4.1",
     "cross-env": "10.1.0",
-    "jsdom": "^29.1.0",
+    "jsdom": "^29.1.1",
     "mkdirp": "^3.0.1",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
