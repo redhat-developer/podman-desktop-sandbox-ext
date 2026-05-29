@@ -110,7 +110,8 @@
   },
   "pnpm": {
     "overrides": {
-      "rollup": "^4.59.0"
+      "rollup": "^4.59.0",
+      "ip-address": "^10.1.1"
     }
   },
   "extensionDependencies": [
