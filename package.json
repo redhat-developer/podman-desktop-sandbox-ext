@@ -114,7 +114,8 @@
       "ip-address": "^10.1.1",
       "minimatch@<3.1.3": "^3.1.3",
       "picomatch@>=4.0.0 <4.0.4": ">=4.0.4",
-      "esbuild": ">=0.28.1"
+      "esbuild": ">=0.28.1",
+      "ws": ">=8.21.0"
     }
   },
   "extensionDependencies": [
