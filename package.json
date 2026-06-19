@@ -92,7 +92,7 @@
     "@playwright/test": "1.61.0",
     "@podman-desktop/tests-playwright": "^1.27.2",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^24",
+    "@types/node": "^26",
     "@vitest/coverage-v8": "^4.1.8",
     "byline": "^5.0.0",
     "copyfiles": "^2.4.1",
