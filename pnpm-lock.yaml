@@ -36,8 +36,8 @@ importers:
         specifier: 1.61.0
         version: 1.61.0
       '@podman-desktop/tests-playwright':
-        specifier: ^1.27.2
-        version: 1.27.2
+        specifier: ^1.28.2
+        version: 1.28.2
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
@@ -231,8 +231,8 @@ packages:
   '@podman-desktop/api@1.28.2':
     resolution: {integrity: sha512-kSBVWUSyuijS5a9HvqFAlihmy6D26nwTPZ0Yw9K/2W11grWeI/AvaS+THTmxHvXk8EbB9y8ydWpXhA8el67NKQ==}
 
-  '@podman-desktop/tests-playwright@1.27.2':
-    resolution: {integrity: sha512-41N7Z5Cb+vR+MrpKJAkqf6s7MsFHoIhCprG8WXaZQeok1OAZRnQttgqsb56Y08e1NoEUYMZ4SoVavIjJrwghvg==}
+  '@podman-desktop/tests-playwright@1.28.2':
+    resolution: {integrity: sha512-7LXWwf3QkPL6GNNzJGZ4rfeUtXuYbb8+WPhzfPrYP/ndt3NIKl+onW1m9VqriHZpZ/U4me+8pjsrAUZstDPD7g==}
 
   '@rolldown/binding-android-arm64@1.0.3':
     resolution: {integrity: sha512-454rs7jHngixp/NMxd5srYD57OnzSlZ/eFTETjORQHLwJG1lRtmNOJcBerZlfu4GjKqeq8aCCIQrMdHyhI51Hw==}
@@ -1546,7 +1546,7 @@ snapshots:
 
   '@podman-desktop/api@1.28.2': {}
 
-  '@podman-desktop/tests-playwright@1.27.2': {}
+  '@podman-desktop/tests-playwright@1.28.2': {}
 
   '@rolldown/binding-android-arm64@1.0.3':
     optional: true
