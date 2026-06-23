@@ -1,5 +1,5 @@
 /**********************************************************************
- * Copyright (C) 2025 Red Hat, Inc.
+ * Copyright (C) 2025 - 2026 Red Hat, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,4 +20,26 @@ import { setTimeout } from 'timers/promises';
 
 export async function delay(interval: number): Promise<void> {
   await setTimeout(interval);
+}
+
+/**
+ * Polls `action` until it returns a defined value or `maxWaitTimeMs` elapses.
+ * Return `undefined` from `action` to keep waiting. Thrown errors propagate immediately.
+ */
+export async function waitFor<T>(
+  action: () => Promise<T | undefined>,
+  maxWaitTimeMs: number,
+  pollIntervalMs = 250,
+): Promise<T | undefined> {
+  let now = Date.now();
+  const deadline = now + maxWaitTimeMs;
+  while (now < deadline) {
+    const result = await action();
+    if (result !== undefined) {
+      return result;
+    }
+    await delay(pollIntervalMs);
+    now += pollIntervalMs;
+  }
+  return undefined;
 }

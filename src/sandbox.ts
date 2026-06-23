@@ -68,6 +68,10 @@ export function getAvailabilityCheckInterval(): number {
   return configuration.getConfiguration('redhat').get<number>('sandbox.availabilityCheckInterval', 8) * 1000;
 }
 
+export function getServiceAccountProvisionMaxWaitTime(): number {
+  return configuration.getConfiguration('redhat').get<number>('sandbox.serviceAccountProvisionMaxWaitTime', 180) * 1000;
+}
+
 function createSandboxAPITimeout(): Delays {
   return {
     response: getRegistrationServiceTimeout(),

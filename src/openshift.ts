@@ -1,5 +1,5 @@
 /**********************************************************************
- * Copyright (C) 2024 Red Hat, Inc.
+ * Copyright (C) 2024 - 2026 Red Hat, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
 import * as extensionApi from '@podman-desktop/api';
 import { CoreV1Api, KubeConfig, V1Secret, V1ServiceAccount } from '@kubernetes/client-node';
-import { getRegistrationServiceTimeout } from './sandbox.js';
-import { delay } from './utils.js';
+import { getRegistrationServiceTimeout, getServiceAccountProvisionMaxWaitTime } from './sandbox.js';
+import { waitFor } from './utils.js';
 
 export interface InternalRegistryInfo {
   host: string;
@@ -145,26 +145,22 @@ async function installPipelineSecretToken(
   } as V1Secret;
 
   await k8sApi.createNamespacedSecret({ namespace: `${username}-dev`, body: v1Secret });
-  const timeout = getRegistrationServiceTimeout();
-  const startTime = Date.now();
-  while (Date.now() - startTime < timeout) {
+  return waitFor(async () => {
     try {
-      const response = await k8sApi.readNamespacedSecret({
+      return await k8sApi.readNamespacedSecret({
         name: secretName,
         namespace: `${username}-dev`,
       });
-      return response;
     } catch (error) {
       const err = error as { response?: { statusCode?: number } };
       if (err.response?.statusCode === 404) {
         console.error(`Cannot read created sandbox secret ${secretName}`);
-        await delay(250);
-      } else {
-        console.error(String(error));
-        throw error;
+        return undefined;
       }
+      console.error(String(error));
+      throw error;
     }
-  }
+  }, getRegistrationServiceTimeout());
 }
 
 export async function getPipelineServiceAccountToken(
@@ -174,12 +170,21 @@ export async function getPipelineServiceAccountToken(
 ): Promise<string> {
   const kcu = prepareKubeConfig('sandbox-proxy', 'sso-user', 'sandbox-proxy-context', proxy, username, idToken);
   const k8sApi = kcu.makeApiClient(CoreV1Api);
-  const serviceAccounts = await k8sApi.listNamespacedServiceAccount({ namespace: `${username}-dev` });
-  const pipelineServiceAccount = serviceAccounts.items.find(
-    serviceAccount => serviceAccount.metadata?.name === 'pipeline',
-  ) as V1ServiceAccount | undefined;
+  const pipelineServiceAccount = await waitFor(async () => {
+    try {
+      return await k8sApi.readNamespacedServiceAccount({
+        name: 'pipeline',
+        namespace: `${username}-dev`,
+      });
+    } catch (error) {
+      // ignore error, continue polling
+      console.error('Error while polling for service accounts: ' + String(error));
+      return undefined;
+    }
+  }, getServiceAccountProvisionMaxWaitTime());
+
   if (!pipelineServiceAccount) {
-    throw new Error(`Couldn't find service account required to create Developer Sandbox connection.`);
+    throw new Error(`Timed out waiting for 'pipeline' service account to appear in namespace '${username}-dev'.`);
   }
 
   const secrets = await k8sApi.listNamespacedSecret({ namespace: `${username}-dev` });

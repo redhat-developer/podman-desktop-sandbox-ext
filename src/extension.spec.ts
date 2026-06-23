@@ -59,12 +59,30 @@ vi.mock(import('./sandbox.js'), async importOriginal => {
     signUp: vi.fn(),
     getRegistrationServiceTimeout: vi.fn(),
     getAvailabilityCheckInterval: vi.fn().mockReturnValue(8000),
+    getServiceAccountProvisionMaxWaitTime: vi.fn(),
   };
 });
 
 vi.mock(import('./utils.js'), () => {
+  const delay = vi.fn().mockResolvedValue(undefined);
   return {
-    delay: vi.fn().mockResolvedValue(undefined),
+    delay,
+    waitFor: async <T>(
+      action: () => Promise<T | undefined>,
+      maxWaitTimeMs: number,
+      pollIntervalMs = 250,
+    ): Promise<T | undefined> => {
+      let elapsedMs = 0;
+      while (elapsedMs < maxWaitTimeMs) {
+        const result = await action();
+        if (result !== undefined) {
+          return result;
+        }
+        await delay(pollIntervalMs);
+        elapsedMs += pollIntervalMs;
+      }
+      return undefined;
+    },
   };
 });
 
@@ -375,6 +393,7 @@ suite('kubernetes provider connection factory', () => {
       const config = new KubeConfig();
       const sandboxAPIMock = () => {
         vi.mocked(sandbox.getRegistrationServiceTimeout).mockReturnValue(30000);
+        vi.mocked(sandbox.getServiceAccountProvisionMaxWaitTime).mockReturnValue(30000);
         vi.mocked(sandbox.getSignUpStatus).mockResolvedValue({
           apiEndpoint: 'https//:sandbox-host-url',
           username: 'username',
@@ -386,15 +405,11 @@ suite('kubernetes provider connection factory', () => {
         vi.mocked(sandbox.signUp).mockResolvedValueOnce();
       };
       const getTokenMock = () => {
-        vi.spyOn(CoreV1Api.prototype, 'listNamespacedServiceAccount').mockResolvedValue({
-          items: [
-            {
-              metadata: {
-                name: 'pipeline',
-                uid: 'unique-id1',
-              },
-            },
-          ],
+        vi.spyOn(CoreV1Api.prototype, 'readNamespacedServiceAccount').mockResolvedValue({
+          metadata: {
+            name: 'pipeline',
+            uid: 'unique-id1',
+          },
         });
         vi.spyOn(CoreV1Api.prototype, 'createNamespacedSecret').mockResolvedValue({} as V1Secret);
         const responseError: any = new Error();
