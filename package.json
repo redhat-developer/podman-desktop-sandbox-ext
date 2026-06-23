@@ -52,6 +52,12 @@
           "minimum": 1,
           "default": 8,
           "description": "Developer Sandbox availability check interval (seconds)"
+        },
+        "redhat.sandbox.serviceAccountProvisionMaxWaitTime" : {
+          "type": "number",
+          "minimum": 60,
+          "default": 180,
+          "description": "Developer Sandbox Service Account Provision Max Wait Time (seconds)"
         }
       }
     },
