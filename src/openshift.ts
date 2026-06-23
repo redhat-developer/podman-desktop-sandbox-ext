@@ -174,16 +174,40 @@ export async function getPipelineServiceAccountToken(
 ): Promise<string> {
   const kcu = prepareKubeConfig('sandbox-proxy', 'sso-user', 'sandbox-proxy-context', proxy, username, idToken);
   const k8sApi = kcu.makeApiClient(CoreV1Api);
-  const serviceAccounts = await k8sApi.listNamespacedServiceAccount({ namespace: `${username}-dev` });
-  const pipelineServiceAccount = serviceAccounts.items.find(
-    serviceAccount => serviceAccount.metadata?.name === 'pipeline',
-  ) as V1ServiceAccount | undefined;
-  if (!pipelineServiceAccount) {
-    throw new Error(`Couldn't find service account required to create Developer Sandbox connection.`);
+  const timeoutMs = 3 * 60 * 1000;
+  const pollIntervalMs = 5000;
+  const deadline = Date.now() + timeoutMs;
+  let pipelineServiceAccount:
+    | Awaited<ReturnType<typeof k8sApi.listNamespacedServiceAccount>>['items'][number]
+    | undefined;
+
+  while (Date.now() < deadline) {
+    try {
+      pipelineServiceAccount = await k8sApi.readNamespacedServiceAccount({
+        name: 'pipeline',
+        namespace: `${username}-dev`,
+      });
+      break;
+    } catch (error) {
+      const err = error as { response?: { statusCode?: number } };
+      if (err.response?.statusCode === 404) {
+        console.error(`Cannot read 'pipeline' service account in namespace '${username}-dev'.`);
+        await delay(pollIntervalMs);
+      } else {
+        console.error(String(error));
+        throw error;
+      }
+    }
   }
 
-  const secrets = await k8sApi.listNamespacedSecret({ namespace: `${username}-dev` });
-  let pipelineTokenSecret = secrets?.items.find(secret => secret.metadata?.name === `pipeline-secret-${username}-dev`);
+  if (!pipelineServiceAccount) {
+    throw new Error(`Timed out waiting for 'pipeline' service account to appear in namespace '${username}-dev'.`);
+  }
+
+  let pipelineTokenSecret: V1Secret | undefined = await k8sApi.readNamespacedSecret({
+    namespace: `${username}-dev`,
+    name: `pipeline-secret-${username}-dev`,
+  });
   if (!pipelineTokenSecret) {
     try {
       pipelineTokenSecret = await installPipelineSecretToken(k8sApi, pipelineServiceAccount, username);
