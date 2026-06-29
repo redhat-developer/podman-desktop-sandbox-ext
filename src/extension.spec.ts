@@ -558,3 +558,98 @@ test('push image to sandbox does not change title after it is finished', async (
 
   expect(report).not.toHaveBeenCalledWith(expect.objectContaining({ message: 'data-chunk-1' }));
 });
+
+describe('connection error property', () => {
+  let config: KubeConfig;
+  let capturedConnection: podmanDesktopApi.KubernetesProviderConnection | undefined;
+  let providerMock: podmanDesktopApi.Provider;
+  let connectionFactory: podmanDesktopApi.KubernetesProviderConnectionFactory;
+
+  beforeEach(async () => {
+    config = new KubeConfig();
+    capturedConnection = undefined;
+
+    vi.mocked(sandbox.getSignUpStatus).mockResolvedValue({
+      apiEndpoint: 'https://sandbox-host-url',
+      username: 'username',
+      status: {
+        ready: true,
+      },
+    } as unknown as sandbox.SBSignupResponse);
+    vi.spyOn(openshift, 'getPipelineServiceAccountToken').mockResolvedValue('token');
+    vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockReturnValue(config);
+    vi.spyOn(kubeconfig, 'exportToFile').mockImplementation(vi.fn());
+
+    providerMock = {
+      setKubernetesProviderConnectionFactory: vi.fn(),
+      registerKubernetesProviderConnection: (connection: podmanDesktopApi.KubernetesProviderConnection) => {
+        capturedConnection = connection;
+        return {
+          dispose: vi.fn(),
+        };
+      },
+    } as any as podmanDesktopApi.Provider;
+    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+    vi.spyOn(podmanDesktopApi.authentication, 'getSession').mockResolvedValue({
+      id: '1',
+      accessToken: 'accessTokenString',
+      idToken: 'idTokenString',
+    } as unknown as podmanDesktopApi.AuthenticationSession);
+
+    await extension.activate(context);
+    connectionFactory = vi.mocked(providerMock.setKubernetesProviderConnectionFactory).mock.calls[0][0];
+  });
+
+  test('connection error property is accessible via getter', async () => {
+    await connectionFactory.create?.({
+      'redhat.sandbox.context.name': 'test-context',
+    });
+
+    expect(capturedConnection).toBeDefined();
+    expect(capturedConnection?.error).toBeUndefined();
+  });
+
+  test('connection error is set when token validation fails', async () => {
+    // Mock got to fail token validation
+    vi.mocked(got).mockRejectedValue(new Error('Token has expired.'));
+
+    await connectionFactory.create?.({
+      'redhat.sandbox.context.name': 'test-context',
+    });
+
+    // Wait for the connection status check to complete
+    await vi.waitFor(() => {
+      expect(capturedConnection?.error).toBeDefined();
+    }, 3000);
+
+    expect(capturedConnection?.error).toContain('Token has expired');
+  });
+
+  test('connection error is cleared when connection succeeds', async () => {
+    // First fail, then succeed
+    vi.mocked(got)
+      .mockRejectedValueOnce(new Error('Connection failed'))
+      .mockResolvedValue({
+        statusCode: 200,
+        body: JSON.stringify({ kind: 'User', metadata: { name: 'system:serviceaccount:username-dev:pipeline' } }),
+      } as any);
+
+    await connectionFactory.create?.({
+      'redhat.sandbox.context.name': 'test-context',
+    });
+
+    // Wait for initial error
+    await vi.waitFor(() => {
+      expect(capturedConnection?.error).toBeDefined();
+    }, 3000);
+
+    expect(capturedConnection?.error).toContain('Connection failed');
+
+    // Wait for periodic update to clear the error
+    await vi.waitFor(() => {
+      expect(capturedConnection?.error).toBeUndefined();
+    }, 5000);
+
+    expect(capturedConnection?.status()).toEqual('started');
+  });
+});
