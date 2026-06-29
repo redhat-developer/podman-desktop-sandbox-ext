@@ -35,6 +35,7 @@ interface ConnectionData {
   disposable?: extensionApi.Disposable;
   connection: extensionApi.KubernetesProviderConnection;
   status: extensionApi.ProviderConnectionStatus;
+  error?: string;
 }
 
 const StartedStatus: extensionApi.ProviderConnectionStatus = 'started';
@@ -154,9 +155,7 @@ async function deleteConnectionAndUpdateKubeconfig(contextName: string): Promise
 }
 
 async function registerConnection(contextName: string, apiURL: string, token: string): Promise<ConnectionData> {
-  // check if cluster is accessible
-  // const status = await getConnectionStatus(apiURL, token);
-  const connection = {
+  const connection: extensionApi.KubernetesProviderConnection = {
     name: contextName,
     status: () => registeredConnections.get(contextName)?.status ?? UnknownStatus,
     endpoint: {
@@ -167,10 +166,24 @@ async function registerConnection(contextName: string, apiURL: string, token: st
         return deleteConnectionAndUpdateKubeconfig(contextName);
       },
     },
+    get error() {
+      return registeredConnections.get(contextName)?.error;
+    },
   };
   const connectionData: ConnectionData = { connection, status: UnknownStatus };
   registeredConnections.set(contextName, connectionData);
   connectionData.disposable = provider.registerKubernetesProviderConnection(connection);
+
+  // Check initial connection status
+  try {
+    const statusResult = await getConnectionStatus(apiURL, token);
+    connectionData.status = statusResult.status;
+    connectionData.error = statusResult.error;
+  } catch (error) {
+    console.error('Failed to get initial connection status:', error);
+    connectionData.error = `Failed to verify connection: ${String(error)}`;
+  }
+
   return connectionData;
 }
 
@@ -392,8 +405,9 @@ async function updateConnections(): Promise<void> {
     const token = userObj?.token ?? '';
     const connectionData = registeredConnections.get(contextName);
     if (!connectionData) return Promise.resolve();
-    return getConnectionStatus(connectionData.connection.endpoint.apiURL, token).then(status => {
-      connectionData.status = status;
+    return getConnectionStatus(connectionData.connection.endpoint.apiURL, token).then(result => {
+      connectionData.status = result.status;
+      connectionData.error = result.error;
     });
   });
 
@@ -415,14 +429,17 @@ async function updateConnections(): Promise<void> {
   );
 }
 
-async function getConnectionStatus(apiURL: string, token: string): Promise<extensionApi.ProviderConnectionStatus> {
+async function getConnectionStatus(
+  apiURL: string,
+  token: string,
+): Promise<{ status: extensionApi.ProviderConnectionStatus; error?: string }> {
   return isTokenValid(apiURL, token)
     .then(() => {
-      return StartedStatus;
+      return { status: StartedStatus };
     })
     .catch(error => {
       console.error('Failed to connect to cluster:', error);
-      return UnknownStatus;
+      return { status: UnknownStatus, error: String(error) };
     });
 }
 
