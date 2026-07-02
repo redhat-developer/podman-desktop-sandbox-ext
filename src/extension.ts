@@ -273,9 +273,16 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       }
 
       // use existing SSO session or request to login
-      const ssoSession = await extensionApi.authentication.getSession('redhat.authentication-provider', ['openid'], {
-        createIfNone: true,
-      });
+      const ssoSession = await extensionApi.authentication.getSession(
+        'redhat.authentication-provider',
+        [
+          'api.iam.registry_service_accounts', //scope that gives access to hydra service accounts API
+          'api.console',
+        ],
+        {
+          createIfNone: true,
+        },
+      );
 
       // check Developer Sandbox status and sign up for it if possible
       let status: SBSignupResponse = await getDevSandboxSignUpStatus((ssoSession as any).idToken);
