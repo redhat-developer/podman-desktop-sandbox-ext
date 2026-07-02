@@ -47,6 +47,8 @@ let registeredConnections: Map<string, ConnectionData> = new Map<string, Connect
 
 type ImageInfo = { engineId: string; name?: string; tag?: string };
 
+export const AuthenticationScopes = ['api.iam.registry_service_accounts', 'api.console'];
+
 export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<void> {
   const qp = Array.from(registeredConnections.values())
     .filter(connection => connection.status === 'started')
@@ -299,9 +301,13 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
       }
 
       // use existing SSO session or request to login
-      const ssoSession = await extensionApi.authentication.getSession('redhat.authentication-provider', ['openid'], {
-        createIfNone: true,
-      });
+      const ssoSession = await extensionApi.authentication.getSession(
+        'redhat.authentication-provider',
+        AuthenticationScopes,
+        {
+          createIfNone: true,
+        },
+      );
 
       // check Developer Sandbox status and sign up for it if possible
       let status: SBSignupResponse = await getDevSandboxSignUpStatus((ssoSession as any).idToken);
