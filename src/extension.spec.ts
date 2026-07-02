@@ -529,16 +529,14 @@ test('push image to sandbox does not change title after it is finished', async (
     },
   );
   let pushImageCallback: ((name: string, data?: string) => void) | undefined;
-  vi.mocked(podmanDesktopApi.containerEngine.pushImage).mockImplementation(
-    (async (
-      _engineId: string,
-      _imageId: string,
-      callback: (name: string, data?: string) => void,
-      _authInfo?: podmanDesktopApi.ContainerAuthInfo,
-    ) => {
-      pushImageCallback = callback;
-    }) as any,
-  );
+  vi.mocked(podmanDesktopApi.containerEngine.pushImage).mockImplementation((async (
+    _engineId: string,
+    _imageId: string,
+    callback: (name: string, data?: string) => void,
+    _authInfo?: podmanDesktopApi.ContainerAuthInfo,
+  ) => {
+    pushImageCallback = callback;
+  }) as any);
   await extension.activate(context);
 
   await vi.waitFor(async () => {
