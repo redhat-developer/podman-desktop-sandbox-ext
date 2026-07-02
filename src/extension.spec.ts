@@ -145,6 +145,22 @@ suite('kubernetes provider connection factory', () => {
     expect(verificationError?.message).is.equal('Context name is required.');
   });
 
+  test('requests authentication session with required scopes', async () => {
+    const config = new KubeConfig();
+    await callCreate(
+      {
+        'redhat.sandbox.context.name': 'contextName',
+        'redhat.sandbox.context.default': true,
+      },
+      config,
+    );
+    expect(podmanDesktopApi.authentication.getSession).toHaveBeenCalledWith(
+      'redhat.authentication-provider',
+      extension.AuthenticationScopes,
+      { createIfNone: true },
+    );
+  });
+
   test('creates new context for sandbox with specified url/token and sets it as default context', async () => {
     const config = new KubeConfig();
     await callCreate(
