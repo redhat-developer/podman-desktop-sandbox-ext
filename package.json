@@ -74,10 +74,11 @@
     }
   },
   "scripts": {
-    "build": "vite build && node ./scripts/build.cjs",
+    "build": "pnpm typecheck && vite build && node ./scripts/build.cjs",
     "watch": "vite build -w",
     "format:check": "prettier --check \"**/*.ts\" \"scripts/*.cjs\"",
     "format:fix": "prettier --write \"**/*.ts\" \"scripts/*.cjs\"",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:e2e:setup": "xvfb-maybe --auto-servernum --server-args='-screen 0 1280x960x24' --",
     "test:e2e": "pnpm run test:e2e:setup npx playwright test tests/src"

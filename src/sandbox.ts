@@ -56,7 +56,7 @@ export interface OauthServerInfo {
   code_challenge_methods_supported: string[];
 }
 
-export function getSandboxAPIUrl(): string {
+export function getSandboxAPIUrl(): string | undefined {
   return configuration.getConfiguration('redhat').get('sandbox.registrationServiceUrl');
 }
 
