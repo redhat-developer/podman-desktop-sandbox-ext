@@ -34,7 +34,7 @@ export function exportToFile(kubeconfig: KubeConfig, configLocation: string): vo
   fs.ensureFileSync(configLocation);
   fs.writeFileSync(
     configLocation,
-    jsYaml.dump(configContents, { noArrayIndent: true, quotingType: '"', lineWidth: -1 }),
+    jsYaml.dump(configContents, { seqNoIndent: true, quoteStyle: 'double', lineWidth: -1 }),
     'utf-8',
   );
 }
