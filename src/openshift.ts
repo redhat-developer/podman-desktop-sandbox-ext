@@ -49,8 +49,17 @@ export async function whoami(clusterUrl: string, token: string): Promise<string>
 export async function getOpenShiftInternalRegistryPublicHost(contextName: string): Promise<InternalRegistryInfo> {
   const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
   const context = config.getContextObject(contextName);
+  if (!context) {
+    throw new Error(`Context '${contextName}' not found in kubeconfig.`);
+  }
   const cluster = config.getCluster(context.cluster);
+  if (!cluster) {
+    throw new Error(`Cluster for context '${contextName}' not found in kubeconfig.`);
+  }
   const user = config.getUser(context.user);
+  if (!user || !user.token) {
+    throw new Error(`User or token for context '${contextName}' not found in kubeconfig.`);
+  }
   const gotOptions = {
     headers: {
       Authorization: `Bearer ${user.token}`,
@@ -118,11 +127,15 @@ async function installPipelineSecretToken(
   pipelineServiceAccount: V1ServiceAccount,
   username: string,
 ): Promise<V1Secret | undefined> {
+  if (!pipelineServiceAccount.metadata?.name || !pipelineServiceAccount.metadata?.uid) {
+    throw new Error('Service account is missing required metadata.');
+  }
+  const secretName = `pipeline-secret-${username}-dev`;
   const v1Secret = {
     apiVersion: 'v1',
     kind: 'Secret',
     metadata: {
-      name: `pipeline-secret-${username}-dev`,
+      name: secretName,
       annotations: {
         'kubernetes.io/service-account.name': pipelineServiceAccount.metadata.name,
         'kubernetes.io/service-account.uid': pipelineServiceAccount.metadata.uid,
@@ -132,19 +145,19 @@ async function installPipelineSecretToken(
   } as V1Secret;
 
   await k8sApi.createNamespacedSecret({ namespace: `${username}-dev`, body: v1Secret });
-  // wait for secret to be created
   const timeout = getRegistrationServiceTimeout();
   const startTime = Date.now();
   while (Date.now() - startTime < timeout) {
     try {
       const response = await k8sApi.readNamespacedSecret({
-        name: v1Secret.metadata.name,
+        name: secretName,
         namespace: `${username}-dev`,
       });
-      return response; // Return the Secret object if found
+      return response;
     } catch (error) {
-      if (error.response && error.response.statusCode === 404) {
-        console.error(`Cannot read created sandbox secret ${v1Secret.metadata.name}`);
+      const err = error as { response?: { statusCode?: number } };
+      if (err.response?.statusCode === 404) {
+        console.error(`Cannot read created sandbox secret ${secretName}`);
         await delay(250);
       } else {
         console.error(String(error));
@@ -163,20 +176,23 @@ export async function getPipelineServiceAccountToken(
   const k8sApi = kcu.makeApiClient(CoreV1Api);
   const serviceAccounts = await k8sApi.listNamespacedServiceAccount({ namespace: `${username}-dev` });
   const pipelineServiceAccount = serviceAccounts.items.find(
-    serviceAccount => serviceAccount.metadata.name === 'pipeline',
-  );
+    serviceAccount => serviceAccount.metadata?.name === 'pipeline',
+  ) as V1ServiceAccount | undefined;
   if (!pipelineServiceAccount) {
     throw new Error(`Couldn't find service account required to create Developer Sandbox connection.`);
   }
 
   const secrets = await k8sApi.listNamespacedSecret({ namespace: `${username}-dev` });
-  let pipelineTokenSecret = secrets?.items.find(secret => secret.metadata.name === `pipeline-secret-${username}-dev`);
+  let pipelineTokenSecret = secrets?.items.find(secret => secret.metadata?.name === `pipeline-secret-${username}-dev`);
   if (!pipelineTokenSecret) {
     try {
       pipelineTokenSecret = await installPipelineSecretToken(k8sApi, pipelineServiceAccount, username);
     } catch (error) {
       throw new Error(`An error occurred when creating secret for Developer Sandbox connection.`);
     }
+  }
+  if (!pipelineTokenSecret?.data?.token) {
+    throw new Error('Failed to get required service account token.');
   }
   return Buffer.from(pipelineTokenSecret.data.token, 'base64').toString();
 }
