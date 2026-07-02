@@ -399,6 +399,48 @@ suite('kubernetes provider connection factory', () => {
   });
 });
 
+describe('deactivation stops periodic connection updates', () => {
+  function setupActivation(): podmanDesktopApi.Provider {
+    const providerMock: podmanDesktopApi.Provider = {
+      setKubernetesProviderConnectionFactory: vi.fn(),
+      registerKubernetesProviderConnection: () => ({
+        dispose: vi.fn(),
+      }),
+    } as any as podmanDesktopApi.Provider;
+    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+    vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockReturnValue(new KubeConfig());
+    return providerMock;
+  }
+
+  test('clearTimeout is called when deactivate is invoked', async () => {
+    setupActivation();
+    await extension.activate(context);
+
+    const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+    extension.deactivate();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+  });
+
+  test('updateConnections is not called again after deactivate', async () => {
+    vi.useFakeTimers();
+    setupActivation();
+    await extension.activate(context);
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    const createOrLoadSpy = vi.mocked(kubeconfig.createOrLoadFromFile);
+    createOrLoadSpy.mockClear();
+
+    extension.deactivate();
+
+    await vi.advanceTimersByTimeAsync(10000);
+
+    expect(createOrLoadSpy).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+});
+
 test('push image to sandbox does not change title after it is finished', async () => {
   vi.mocked(got).mockImplementation(
     // use vi.fn(), so there is no need to deal with types safety when mocking
