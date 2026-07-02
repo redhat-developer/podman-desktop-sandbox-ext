@@ -17,6 +17,7 @@
  ***********************************************************************/
 
 import { KubeConfig } from '@kubernetes/client-node';
+import type { AuditRequestItems, AuditResult } from '@podman-desktop/api';
 import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
@@ -212,6 +213,28 @@ export async function getDevSandboxSignUpStatus(idToken: string): Promise<SBSign
   return status;
 }
 
+export async function connectionAuditor(items: AuditRequestItems): Promise<AuditResult> {
+  const records: extensionApi.AuditRecord[] = [];
+
+  const contextName = items[ContextNameParam];
+  if (!contextName) {
+    records.push({
+      type: 'error',
+      record: 'Context name is required.',
+    });
+  } else {
+    const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
+    if (config['contexts'].find(context => context['name'] === contextName)) {
+      records.push({
+        type: 'error',
+        record: `Context ${contextName} already exists, please choose a different name.`,
+      });
+    }
+  }
+
+  return { records };
+}
+
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
   console.log('starting extension redhat-developer-sandbox');
 
@@ -253,70 +276,63 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
   const kubeconfigFile = kubeconfigUri.fsPath;
   console.log('Config file location', kubeconfigFile);
 
-  const disposable = provider.setKubernetesProviderConnectionFactory({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    create: async (
-      params: { [key: string]: any },
-      _logger?: extensionApi.Logger,
-      _token?: extensionApi.CancellationToken,
-    ) => {
-      // check if context name is provided
-      if (!params[ContextNameParam]) {
-        throw new Error('Context name is required.');
-      }
+  const disposable = provider.setKubernetesProviderConnectionFactory(
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      create: async (
+        params: { [key: string]: any },
+        _logger?: extensionApi.Logger,
+        _token?: extensionApi.CancellationToken,
+      ) => {
+        const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
 
-      // first verify context name does not exists yet in kubeconfig
-      const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
+        const ssoSession = await extensionApi.authentication.getSession('redhat.authentication-provider', ['openid'], {
+          createIfNone: true,
+        });
 
-      if (config['contexts'].find(context => context['name'] === params[ContextNameParam])) {
-        throw new Error(`Context ${params[ContextNameParam]} already exists, please choose a different name.`);
-      }
+        let status: SBSignupResponse = await getDevSandboxSignUpStatus((ssoSession as any).idToken);
 
-      // use existing SSO session or request to login
-      const ssoSession = await extensionApi.authentication.getSession('redhat.authentication-provider', ['openid'], {
-        createIfNone: true,
-      });
+        const token = await getPipelineServiceAccountToken(
+          status.proxyURL,
+          status.compliantUsername,
+          (ssoSession as any).idToken,
+        );
 
-      // check Developer Sandbox status and sign up for it if possible
-      let status: SBSignupResponse = await getDevSandboxSignUpStatus((ssoSession as any).idToken);
+        const suffix = Math.random().toString(36).substring(7);
+        const clusterName = `sandbox-cluster-${suffix}`;
+        const userName = `sandbox-user-${suffix}`;
 
-      // get pipeline service account token or create new one
-      const token = await getPipelineServiceAccountToken(
-        status.proxyURL,
-        status.compliantUsername,
-        (ssoSession as any).idToken,
-      );
+        config.addCluster({
+          server: status.apiEndpoint,
+          name: clusterName,
+          skipTLSVerify: false,
+        });
+        config.addUser({
+          name: userName,
+          token,
+        });
+        config.addContext({
+          cluster: clusterName,
+          user: userName,
+          name: params[ContextNameParam],
+          namespace: `${status.compliantUsername}-dev`,
+        });
+        if (params[DefaultContextParam]) {
+          config.setCurrentContext(params[ContextNameParam]);
+        }
 
-      const suffix = Math.random().toString(36).substring(7);
+        kubeconfig.exportToFile(config, kubeconfigFile);
 
-      const clusterName = `sandbox-cluster-${suffix}`; // has unique name
-      const userName = `sandbox-user-${suffix}`; // generate a unique name for the user
-
-      config.addCluster({
-        server: status.apiEndpoint,
-        name: clusterName,
-        skipTLSVerify: false,
-      });
-      config.addUser({
-        name: userName,
-        token,
-      });
-      config.addContext({
-        cluster: clusterName,
-        user: userName,
-        name: params[ContextNameParam],
-        namespace: `${status.compliantUsername}-dev`,
-      });
-      if (params[DefaultContextParam]) {
-        config.setCurrentContext(params[ContextNameParam]);
-      }
-
-      kubeconfig.exportToFile(config, kubeconfigFile);
-
-      await registerConnection(params[ContextNameParam], status.apiEndpoint, token);
+        await registerConnection(params[ContextNameParam], status.apiEndpoint, token);
+      },
+      creationDisplayName: ProvideDisplayName,
     },
-    creationDisplayName: ProvideDisplayName,
-  });
+    {
+      auditItems: async (items: AuditRequestItems) => {
+        return await connectionAuditor(items);
+      },
+    },
+  );
 
   extensionContext.subscriptions.push(
     extensionApi.commands.registerCommand('sandbox.image.push.to.cluster', image => {
