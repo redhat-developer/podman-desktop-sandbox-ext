@@ -85,6 +85,45 @@ test('kubernetes provider connection factory is set during activation', async ()
   expect(providerMock.setKubernetesProviderConnectionFactory).toBeCalled();
 });
 
+describe('connectionAuditor', () => {
+  test('returns error when context name is not provided', async () => {
+    const result = await extension.connectionAuditor({});
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0].type).toBe('error');
+    expect(result.records[0].record).toBe('Context name is required.');
+  });
+
+  test('returns error when context name already exists in kubeconfig', async () => {
+    const config = new KubeConfig();
+    config.loadFromOptions({
+      contexts: [{ cluster: 'cluster', name: 'existingContext', user: 'user' }],
+      clusters: [{ name: 'cluster', server: 'https://server' }],
+      users: [{ name: 'user', token: 'token' }],
+    });
+    vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockReturnValue(config);
+    const result = await extension.connectionAuditor({
+      [extension.ContextNameParam]: 'existingContext',
+    });
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0].type).toBe('error');
+    expect(result.records[0].record).toBe('Context existingContext already exists, please choose a different name.');
+  });
+
+  test('returns no errors when context name is valid and unique', async () => {
+    const config = new KubeConfig();
+    config.loadFromOptions({
+      contexts: [],
+      clusters: [],
+      users: [],
+    });
+    vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockReturnValue(config);
+    const result = await extension.connectionAuditor({
+      [extension.ContextNameParam]: 'newContext',
+    });
+    expect(result.records).toHaveLength(0);
+  });
+});
+
 suite('kubernetes provider connection factory', () => {
   async function callCreate(
     params: { [key: string]: any } = {},
@@ -137,13 +176,6 @@ suite('kubernetes provider connection factory', () => {
       provider: providerMock,
     };
   }
-
-  test('verifies context name is entered', async () => {
-    const { error: verificationError } = await callCreate();
-
-    expect(verificationError).toBeDefined();
-    expect(verificationError?.message).is.equal('Context name is required.');
-  });
 
   test('requests authentication session with required scopes', async () => {
     const config = new KubeConfig();
