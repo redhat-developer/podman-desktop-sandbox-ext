@@ -212,8 +212,11 @@ export async function getDevSandboxSignUpStatus(idToken: string): Promise<SBSign
   return status;
 }
 
+let deactivated = false; // flag to prevent setting timeout after deactivation
+
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
   console.log('starting extension redhat-developer-sandbox');
+  deactivated = false; // reset for tests to work correctly
 
   let status: extensionApi.ProviderStatus = 'ready';
   const icon = './icon.png';
@@ -331,12 +334,15 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 
 function updateConnectionsPeriodically(): void {
   updateConnections().then(() => {
-    updateConnectionTimeout = setTimeout(updateConnectionsPeriodically, 2000);
+    if (!deactivated) {
+      updateConnectionTimeout = setTimeout(updateConnectionsPeriodically, 2000);
+    }
   });
 }
 
 export function deactivate(): void {
   console.log('deactivating redhat-developer-sandbox extension');
+  deactivated = true;
   if (updateConnectionTimeout) {
     clearTimeout(updateConnectionTimeout);
   }
