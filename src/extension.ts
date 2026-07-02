@@ -56,7 +56,7 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
     );
     return;
   }
-  let targetSb: string;
+  let targetSb: string | undefined;
   if (qp.length > 1) {
     targetSb = await extensionApi.window.showQuickPick(qp);
     if (!targetSb) {
@@ -76,8 +76,9 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
         progress.report({ increment: 25 });
         const registryInfo = await getOpenShiftInternalRegistryPublicHost(targetSb);
         progress.report({ increment: 50 });
-        const lastIndexOfSlash = image.name.lastIndexOf('/');
-        const imageShortName = lastIndexOfSlash !== -1 ? image.name.substring(lastIndexOfSlash + 1) : image.name;
+        const imageName = image.name ?? '';
+        const lastIndexOfSlash = imageName.lastIndexOf('/');
+        const imageShortName = lastIndexOfSlash !== -1 ? imageName.substring(lastIndexOfSlash + 1) : imageName;
         const imageTagSuffix = image.tag ? `:${image.tag}` : ``;
         const localImageName = `${image.name}${imageTagSuffix}`;
         const remoteImageName = `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`;
@@ -128,18 +129,23 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
 async function deleteContext(contextName: string): Promise<void> {
   const config = kubeconfig.createOrLoadFromFile(extensionApi.kubernetes.getKubeconfig().fsPath);
   const context = config.getContextObject(contextName);
+  if (!context) return;
   const cluster = config.getCluster(context.cluster);
   const user = config.getUser(context.user);
   config.getContexts().splice(config.getContexts().indexOf(context), 1);
-  config.getClusters().splice(config.getClusters().indexOf(cluster), 1);
-  config.getUsers().splice(config.getUsers().indexOf(user), 1);
+  if (cluster) {
+    config.getClusters().splice(config.getClusters().indexOf(cluster), 1);
+  }
+  if (user) {
+    config.getUsers().splice(config.getUsers().indexOf(user), 1);
+  }
   kubeconfig.exportToFile(config, extensionApi.kubernetes.getKubeconfig().fsPath);
 }
 
 function deleteConnection(contextName: string) {
   const deletedConnection = registeredConnections.get(contextName);
   registeredConnections.delete(contextName);
-  deletedConnection.disposable.dispose();
+  deletedConnection?.disposable?.dispose();
 }
 
 async function deleteConnectionAndUpdateKubeconfig(contextName: string): Promise<void> {
@@ -152,7 +158,7 @@ async function registerConnection(contextName: string, apiURL: string, token: st
   // const status = await getConnectionStatus(apiURL, token);
   const connection = {
     name: contextName,
-    status: () => registeredConnections.get(contextName).status,
+    status: () => registeredConnections.get(contextName)?.status ?? UnknownStatus,
     endpoint: {
       apiURL,
     },
@@ -169,7 +175,7 @@ async function registerConnection(contextName: string, apiURL: string, token: st
 }
 
 export async function getDevSandboxSignUpStatus(idToken: string): Promise<SBSignupResponse> {
-  let status: SBSignupResponse;
+  let status: SBSignupResponse | undefined;
   try {
     status = await getSignUpStatus(idToken);
   } catch (error) {
@@ -193,6 +199,10 @@ export async function getDevSandboxSignUpStatus(idToken: string): Promise<SBSign
         `Couldn't get Developer Sandbox status after successfully signing you up for a trial. Please try again later.: ${String(error)}`,
       );
     }
+  }
+
+  if (!status) {
+    throw new Error(`Couldn't get Developer Sandbox status.`);
   }
 
   if (!status.status.ready) {
@@ -343,7 +353,7 @@ export function deactivate(): void {
 }
 
 async function updateConnections(): Promise<void> {
-  let config: KubeConfig;
+  let config: KubeConfig | undefined;
   let attempts = 0;
   while (attempts < 5) {
     try {
@@ -367,16 +377,15 @@ async function updateConnections(): Promise<void> {
     contextName => !config.getContexts().find(context => context.name === contextName),
   );
   deletedConnections.forEach(contextName => {
-    const deletedConnection = registeredConnections.get(contextName);
     deleteConnection(contextName);
-    deletedConnection.disposable.dispose();
   });
 
-  // update status of existin connections
   const updateStatusRequests = Array.from(registeredConnections.keys()).map(contextName => {
-    // get current token from config file
-    const token = config.getUser(config.getContextObject(contextName).user).token;
+    const contextObj = config.getContextObject(contextName);
+    const userObj = contextObj ? config.getUser(contextObj.user) : undefined;
+    const token = userObj?.token ?? '';
     const connectionData = registeredConnections.get(contextName);
+    if (!connectionData) return Promise.resolve();
     return getConnectionStatus(connectionData.connection.endpoint.apiURL, token).then(status => {
       connectionData.status = status;
     });
@@ -391,9 +400,11 @@ async function updateConnections(): Promise<void> {
     .filter(context => context.cluster.startsWith('sandbox-cluster-'))
     .filter(context => !registeredConnections.get(context.name));
   await Promise.all(
-    addedSandboxContexts.map(context => {
+    addedSandboxContexts.map(async context => {
       const cluster = config.getCluster(context.cluster);
-      return registerConnection(context.name, cluster.server, config.getUser(context.user).token);
+      const user = config.getUser(context.user);
+      if (!cluster || !user?.token) return;
+      return registerConnection(context.name, cluster.server, user.token);
     }),
   );
 }

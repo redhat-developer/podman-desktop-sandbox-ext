@@ -25,7 +25,7 @@ import { URI } from 'vscode-uri';
 import * as openshift from './openshift.js';
 import * as sandbox from './sandbox.js';
 import * as kubeconfig from './kubeconfig.js';
-import { CoreV1Api, KubeConfig } from '@kubernetes/client-node';
+import { CoreV1Api, KubeConfig, type V1Secret } from '@kubernetes/client-node';
 import got from 'got';
 
 const context: podmanDesktopApi.ExtensionContext = {
@@ -91,7 +91,7 @@ suite('kubernetes provider connection factory', () => {
     config: KubeConfig = new KubeConfig(),
     mockSandboxCalls?: () => void,
     mockGetPipelineServiceAccountToken?: () => void,
-  ): Promise<{ error: Error; provider: podmanDesktopApi.Provider } | undefined> {
+  ): Promise<{ error: Error | undefined; provider: podmanDesktopApi.Provider }> {
     const providerMock: podmanDesktopApi.Provider = {
       setKubernetesProviderConnectionFactory: vi.fn(),
       registerKubernetesProviderConnection: () => ({
@@ -106,7 +106,7 @@ suite('kubernetes provider connection factory', () => {
     } as unknown as podmanDesktopApi.AuthenticationSession);
     await extension.activate(context);
     const connectionFactory = vi.mocked(providerMock.setKubernetesProviderConnectionFactory).mock.calls[0][0];
-    let verificationError: Error;
+    let verificationError: Error | undefined = undefined;
     try {
       mockSandboxCalls?.();
       if (!mockSandboxCalls) {
@@ -125,9 +125,12 @@ suite('kubernetes provider connection factory', () => {
       vi.spyOn(openshift, 'whoami').mockResolvedValue('system:serviceaccount:username-dev:pipeline');
       vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockReturnValue(config);
       vi.spyOn(kubeconfig, 'exportToFile').mockImplementation(vi.fn());
-      await connectionFactory.create(params);
+
+      expect(connectionFactory).toBeDefined();
+      expect(typeof connectionFactory?.create).toBe('function');
+      await connectionFactory?.create?.(params);
     } catch (e) {
-      verificationError = e;
+      verificationError = e as Error;
     }
     return {
       error: verificationError,
@@ -139,7 +142,7 @@ suite('kubernetes provider connection factory', () => {
     const { error: verificationError } = await callCreate();
 
     expect(verificationError).toBeDefined();
-    expect(verificationError.message).is.equal('Context name is required.');
+    expect(verificationError?.message).is.equal('Context name is required.');
   });
 
   test('creates new context for sandbox with specified url/token and sets it as default context', async () => {
@@ -344,8 +347,8 @@ suite('kubernetes provider connection factory', () => {
             },
           ],
         });
-        vi.spyOn(CoreV1Api.prototype, 'createNamespacedSecret').mockResolvedValue(undefined);
-        const responseError = new Error();
+        vi.spyOn(CoreV1Api.prototype, 'createNamespacedSecret').mockResolvedValue({} as V1Secret);
+        const responseError: any = new Error();
         responseError['response'] = {
           statusCode: 404,
         };
@@ -444,7 +447,7 @@ test('push image to sandbox does not change title after it is finished', async (
     return config;
   });
   const registerCommandMock = vi.mocked(podmanDesktopApi.commands.registerCommand);
-  let commandCallback: (...args: any[]) => any;
+  let commandCallback: ((...args: any[]) => any) | undefined;
   registerCommandMock.mockImplementation((commandId: string, callback: (...args: any[]) => any) => {
     if (commandId === 'sandbox.image.push.to.cluster') {
       commandCallback = callback;
@@ -456,7 +459,7 @@ test('push image to sandbox does not change title after it is finished', async (
   let registeredConnection: { status: () => any };
   const providerMock: podmanDesktopApi.Provider = {
     setKubernetesProviderConnectionFactory: vi.fn(),
-    registerKubernetesProviderConnection: connection => {
+    registerKubernetesProviderConnection: (connection: podmanDesktopApi.KubernetesProviderConnection) => {
       registeredConnection = connection;
       return {
         dispose: vi.fn(),
@@ -479,20 +482,20 @@ test('push image to sandbox does not change title after it is finished', async (
       const progress: podmanDesktopApi.Progress<{ message?: string; increment?: number }> = {
         report,
       };
-      task(progress, undefined);
-      return;
+      task(progress, {} as podmanDesktopApi.CancellationToken);
+      return Promise.resolve();
     },
   );
-  let pushImageCallback: (name: string, data?: string) => void;
+  let pushImageCallback: ((name: string, data?: string) => void) | undefined;
   vi.mocked(podmanDesktopApi.containerEngine.pushImage).mockImplementation(
-    async (
+    (async (
       _engineId: string,
       _imageId: string,
-      callback: (name: string, data: string) => Promise<void>,
+      callback: (name: string, data?: string) => void,
       _authInfo?: podmanDesktopApi.ContainerAuthInfo,
     ) => {
       pushImageCallback = callback;
-    },
+    }) as any,
   );
   await extension.activate(context);
 
@@ -504,14 +507,14 @@ test('push image to sandbox does not change title after it is finished', async (
 
   const imageInfo = { engineId: 'podman', name: 'imageName', tag: 'registry-host/repository/image' };
 
-  await Promise.resolve(commandCallback(...[imageInfo]));
+  await Promise.resolve(commandCallback?.(...[imageInfo]));
 
   await vi.waitFor(async () => {
     expect(pushImageCallback).toBeDefined();
   }, 3000);
 
-  pushImageCallback('data', 'data-chunk-1');
-  pushImageCallback('end');
+  pushImageCallback?.('data', 'data-chunk-1');
+  pushImageCallback?.('end');
 
   expect(report).not.toHaveBeenCalledWith(expect.objectContaining({ message: 'data-chunk-1' }));
 });
