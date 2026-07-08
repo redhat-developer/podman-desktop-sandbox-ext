@@ -385,15 +385,11 @@ suite('kubernetes provider connection factory', () => {
         vi.mocked(sandbox.signUp).mockResolvedValueOnce();
       };
       const getTokenMock = () => {
-        vi.spyOn(CoreV1Api.prototype, 'listNamespacedServiceAccount').mockResolvedValue({
-          items: [
-            {
-              metadata: {
-                name: 'pipeline',
-                uid: 'unique-id1',
-              },
-            },
-          ],
+        vi.spyOn(CoreV1Api.prototype, 'readNamespacedServiceAccount').mockResolvedValue({
+          metadata: {
+            name: 'pipeline',
+            uid: 'unique-id1',
+          },
         });
         vi.spyOn(CoreV1Api.prototype, 'createNamespacedSecret').mockResolvedValue({} as V1Secret);
         const responseError: any = new Error();

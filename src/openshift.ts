@@ -174,12 +174,8 @@ export async function getPipelineServiceAccountToken(
 ): Promise<string> {
   const kcu = prepareKubeConfig('sandbox-proxy', 'sso-user', 'sandbox-proxy-context', proxy, username, idToken);
   const k8sApi = kcu.makeApiClient(CoreV1Api);
-  const timeoutMs = 3 * 60 * 1000;
-  const pollIntervalMs = 5000;
-  const deadline = Date.now() + timeoutMs;
-  let pipelineServiceAccount:
-    | Awaited<ReturnType<typeof k8sApi.listNamespacedServiceAccount>>['items'][number]
-    | undefined;
+  const deadline = Date.now() + getRegistrationServiceTimeout();
+  let pipelineServiceAccount: V1ServiceAccount | undefined;
 
   while (Date.now() < deadline) {
     try {
@@ -187,17 +183,14 @@ export async function getPipelineServiceAccountToken(
         name: 'pipeline',
         namespace: `${username}-dev`,
       });
-      break;
-    } catch (error) {
-      const err = error as { response?: { statusCode?: number } };
-      if (err.response?.statusCode === 404) {
-        console.error(`Cannot read 'pipeline' service account in namespace '${username}-dev'.`);
-        await delay(pollIntervalMs);
-      } else {
-        console.error(String(error));
-        throw error;
+      if (pipelineServiceAccount) {
+        break;
       }
+    } catch (error) {
+      // ignore error, continue polling
+      console.error('Error while polling for service accounts: ' + String(error));
     }
+    await delay(250);
   }
 
   if (!pipelineServiceAccount) {
