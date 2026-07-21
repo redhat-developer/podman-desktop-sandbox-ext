@@ -100,7 +100,7 @@
     "cross-env": "10.1.0",
     "jsdom": "^29.1.1",
     "mkdirp": "^3.0.1",
-    "prettier": "^3.9.5",
+    "prettier": "^3.9.6",
     "typescript": "^7.0.2",
     "vite": "^8.1.5",
     "vitest": "^4.1.8",
