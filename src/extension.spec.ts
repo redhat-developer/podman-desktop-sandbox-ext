@@ -58,6 +58,7 @@ vi.mock(import('./sandbox.js'), async importOriginal => {
     getSignUpStatus: vi.fn(),
     signUp: vi.fn(),
     getRegistrationServiceTimeout: vi.fn(),
+    getServiceAccoutCreationTimeout: vi.fn(),
   };
 });
 
@@ -374,6 +375,7 @@ suite('kubernetes provider connection factory', () => {
       const config = new KubeConfig();
       const sandboxAPIMock = () => {
         vi.mocked(sandbox.getRegistrationServiceTimeout).mockReturnValue(30000);
+        vi.mocked(sandbox.getServiceAccoutCreationTimeout).mockReturnValue(30000);
         vi.mocked(sandbox.getSignUpStatus).mockResolvedValue({
           apiEndpoint: 'https//:sandbox-host-url',
           username: 'username',
