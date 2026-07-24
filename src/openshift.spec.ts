@@ -67,9 +67,7 @@ describe('getPipelineServiceAccountToken', () => {
       }
     });
 
-    await expect(
-      getPipelineServiceAccountToken('https://proxy.example.com', 'username', 'id-token'),
-    ).rejects.toThrow(
+    await expect(getPipelineServiceAccountToken('https://proxy.example.com', 'username', 'id-token')).rejects.toThrow(
       `Timed out waiting for 'pipeline' service account to appear in namespace 'username-dev'.`,
     );
 
