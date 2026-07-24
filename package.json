@@ -46,6 +46,12 @@
           "minimum": 0,
           "default": "30",
           "description": "Developer Sandbox Registration Service timeout (seconds)"
+        },
+        "redhat.sandbox.availabilityCheckInterval": {
+          "type": "number",
+          "minimum": 1,
+          "default": 8,
+          "description": "Developer Sandbox availability check interval (seconds)"
         }
       }
     },

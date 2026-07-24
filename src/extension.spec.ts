@@ -58,6 +58,7 @@ vi.mock(import('./sandbox.js'), async importOriginal => {
     getSignUpStatus: vi.fn(),
     signUp: vi.fn(),
     getRegistrationServiceTimeout: vi.fn(),
+    getAvailabilityCheckInterval: vi.fn().mockReturnValue(8000),
   };
 });
 
@@ -488,6 +489,30 @@ describe('deactivation stops periodic connection updates', () => {
     await vi.advanceTimersByTimeAsync(10000);
 
     expect(createOrLoadSpy).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  test('uses availability check interval for periodic connection updates', async () => {
+    vi.useFakeTimers();
+    const intervalMs = 5000;
+    vi.mocked(sandbox.getAvailabilityCheckInterval).mockReturnValue(intervalMs);
+    setupActivation();
+    await extension.activate(context);
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(sandbox.getAvailabilityCheckInterval).toHaveBeenCalled();
+
+    const createOrLoadSpy = vi.mocked(kubeconfig.createOrLoadFromFile);
+    createOrLoadSpy.mockClear();
+
+    await vi.advanceTimersByTimeAsync(intervalMs - 1);
+    expect(createOrLoadSpy).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(createOrLoadSpy).toHaveBeenCalled();
+
+    extension.deactivate();
     vi.useRealTimers();
   });
 });
