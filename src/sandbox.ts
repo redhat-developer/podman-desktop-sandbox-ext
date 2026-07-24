@@ -64,6 +64,10 @@ export function getRegistrationServiceTimeout(): number {
   return configuration.getConfiguration('redhat').get<number>('sandbox.registrationServiceTimeout', 30) * 1000;
 }
 
+export function getServiceAccoutCreationTimeout(): number {
+  return configuration.getConfiguration('redhat').get<number>('sandbox.serviceAccountCreationTimeout', 180) * 1000;
+}
+
 function createSandboxAPITimeout(): Delays {
   return {
     response: getRegistrationServiceTimeout(),

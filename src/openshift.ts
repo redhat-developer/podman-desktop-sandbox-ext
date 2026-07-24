@@ -20,7 +20,7 @@ import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
 import * as extensionApi from '@podman-desktop/api';
 import { CoreV1Api, KubeConfig, V1Secret, V1ServiceAccount } from '@kubernetes/client-node';
-import { getRegistrationServiceTimeout } from './sandbox.js';
+import { getRegistrationServiceTimeout, getServiceAccoutCreationTimeout } from './sandbox.js';
 import { delay } from './utils.js';
 
 export interface InternalRegistryInfo {
@@ -174,7 +174,7 @@ export async function getPipelineServiceAccountToken(
 ): Promise<string> {
   const kcu = prepareKubeConfig('sandbox-proxy', 'sso-user', 'sandbox-proxy-context', proxy, username, idToken);
   const k8sApi = kcu.makeApiClient(CoreV1Api);
-  const deadline = Date.now() + getRegistrationServiceTimeout();
+  const deadline = Date.now() + getServiceAccoutCreationTimeout();
   let pipelineServiceAccount: V1ServiceAccount | undefined;
 
   while (Date.now() < deadline) {
@@ -197,10 +197,8 @@ export async function getPipelineServiceAccountToken(
     throw new Error(`Timed out waiting for 'pipeline' service account to appear in namespace '${username}-dev'.`);
   }
 
-  let pipelineTokenSecret: V1Secret | undefined = await k8sApi.readNamespacedSecret({
-    namespace: `${username}-dev`,
-    name: `pipeline-secret-${username}-dev`,
-  });
+  const secrets = await k8sApi.listNamespacedSecret({ namespace: `${username}-dev` });
+  let pipelineTokenSecret = secrets?.items.find(secret => secret.metadata?.name === `pipeline-secret-${username}-dev`);
   if (!pipelineTokenSecret) {
     try {
       pipelineTokenSecret = await installPipelineSecretToken(k8sApi, pipelineServiceAccount, username);
