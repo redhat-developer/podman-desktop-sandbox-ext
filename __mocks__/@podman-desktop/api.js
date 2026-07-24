@@ -44,6 +44,12 @@ module.exports = {
     getKubeconfig: vi.fn(),
   },
 
+  configuration: {
+    getConfiguration: vi.fn().mockReturnValue({
+      get: vi.fn((_key, defaultValue) => defaultValue),
+    }),
+  },
+
   env: {
     createTelemetryLogger: () => {
       return {
