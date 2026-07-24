@@ -20,7 +20,7 @@ import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
 import * as extensionApi from '@podman-desktop/api';
 import { CoreV1Api, KubeConfig, V1Secret, V1ServiceAccount } from '@kubernetes/client-node';
-import { getRegistrationServiceTimeout } from './sandbox.js';
+import { getRegistrationServiceTimeout, getServiceAccoutCreationTimeout } from './sandbox.js';
 import { delay } from './utils.js';
 
 export interface InternalRegistryInfo {
@@ -174,12 +174,27 @@ export async function getPipelineServiceAccountToken(
 ): Promise<string> {
   const kcu = prepareKubeConfig('sandbox-proxy', 'sso-user', 'sandbox-proxy-context', proxy, username, idToken);
   const k8sApi = kcu.makeApiClient(CoreV1Api);
-  const serviceAccounts = await k8sApi.listNamespacedServiceAccount({ namespace: `${username}-dev` });
-  const pipelineServiceAccount = serviceAccounts.items.find(
-    serviceAccount => serviceAccount.metadata?.name === 'pipeline',
-  ) as V1ServiceAccount | undefined;
+  const deadline = Date.now() + getServiceAccoutCreationTimeout();
+  let pipelineServiceAccount: V1ServiceAccount | undefined;
+
+  while (Date.now() < deadline) {
+    try {
+      pipelineServiceAccount = await k8sApi.readNamespacedServiceAccount({
+        name: 'pipeline',
+        namespace: `${username}-dev`,
+      });
+      if (pipelineServiceAccount) {
+        break;
+      }
+    } catch (error) {
+      // ignore error, continue polling
+      console.error('Error while polling for service accounts: ' + String(error));
+    }
+    await delay(250);
+  }
+
   if (!pipelineServiceAccount) {
-    throw new Error(`Couldn't find service account required to create Developer Sandbox connection.`);
+    throw new Error(`Timed out waiting for 'pipeline' service account to appear in namespace '${username}-dev'.`);
   }
 
   const secrets = await k8sApi.listNamespacedSecret({ namespace: `${username}-dev` });
