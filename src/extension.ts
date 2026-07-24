@@ -22,7 +22,7 @@ import * as extensionApi from '@podman-desktop/api';
 import got from 'got';
 import * as kubeconfig from './kubeconfig.js';
 import { getOpenShiftInternalRegistryPublicHost, getPipelineServiceAccountToken } from './openshift.js';
-import { getSignUpStatus, SBSignupResponse, signUp } from './sandbox.js';
+import { getAvailabilityCheckInterval, getSignUpStatus, SBSignupResponse, signUp } from './sandbox.js';
 
 const ProvideDisplayName = 'Developer Sandbox';
 
@@ -385,7 +385,7 @@ export async function activate(extensionContext: extensionApi.ExtensionContext):
 function updateConnectionsPeriodically(): void {
   updateConnections().then(() => {
     if (!deactivated) {
-      updateConnectionTimeout = setTimeout(updateConnectionsPeriodically, 2000);
+      updateConnectionTimeout = setTimeout(updateConnectionsPeriodically, getAvailabilityCheckInterval());
     }
   });
 }
@@ -451,7 +451,8 @@ async function updateConnections(): Promise<void> {
       const cluster = config.getCluster(context.cluster);
       const user = config.getUser(context.user);
       if (!cluster || !user?.token) return;
-      return registerConnection(context.name, cluster.server, user.token);
+      const connectionData = await registerConnection(context.name, cluster.server, user.token);
+      connectionData.status = await getConnectionStatus(cluster.server, user.token);
     }),
   );
 }
