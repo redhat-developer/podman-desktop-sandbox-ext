@@ -97,7 +97,7 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "^1.4.0",
-    "@podman-desktop/api": "^1.28.3",
+    "@podman-desktop/api": "^1.29.1",
     "fs-extra": "^11.4.0",
     "got": "^15.1.0"
   },
