@@ -21,6 +21,7 @@ ENV EXTENSION_SRC=/opt/app-root/extension-source
 RUN mkdir -p $EXTENSION_SRC
 WORKDIR $EXTENSION_SRC
 
+COPY --chown=1001:0 pnpm-workspace.yaml /opt/app-root/extension-source/
 COPY pnpm-lock.yaml package.json .
 RUN npm install --global pnpm && \
     pnpm --frozen-lockfile install

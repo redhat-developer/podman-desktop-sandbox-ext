@@ -171,17 +171,9 @@ jobs:
           # allow unprivileged user namespace
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
-      - name: Ensure getting current HEAD version of the test framework
-        working-directory: ./podman-desktop-sandbox-ext
-        run: |
-          # workaround for https://github.com/containers/podman-desktop-extension-bootc/issues/712
-          version=$(npm view @podman-desktop/tests-playwright@next version)
-          echo "Version of @podman-desktop/tests-playwright to be used: $version"
-          jq --arg version "$version" '.devDependencies."@podman-desktop/tests-playwright" = $version' package.json > package.json_tmp && mv package.json_tmp package.json
-
       - name: Execute pnpm in Sandbox extension
         working-directory: ./podman-desktop-sandbox-ext
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install
       
       - name: Build Sandbox extension from container file and install SSO dependency
         working-directory: ./podman-desktop-sandbox-ext
