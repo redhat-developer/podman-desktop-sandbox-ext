@@ -15,6 +15,7 @@ overrides:
   brace-expansion@^1: 1.1.18
   brace-expansion@^5: 5.0.9
   undici: ^7.28.0
+  adm-zip: '>=0.6.1'
 
 importers:
 
@@ -49,8 +50,8 @@ importers:
         specifier: ^4.1.8
         version: 4.1.8(vitest@4.1.11)
       adm-zip:
-        specifier: ^0.6.0
-        version: 0.6.0
+        specifier: '>=0.6.1'
+        version: 0.6.1
       byline:
         specifier: ^5.0.0
         version: 5.0.0
@@ -519,8 +520,8 @@ packages:
   '@vitest/utils@4.1.8':
     resolution: {integrity: sha512-uOJamYALNhfJ6iolExyQM40yIQwDqYnkKtQ5VCiSe17E33H0aQ/u+1GlRuz4LZBk6Mm3sg90G9hEbmEt37C1Zg==}
 
-  adm-zip@0.6.0:
-    resolution: {integrity: sha512-XleryMhbuksdKtofnWZ9Sk+4CUTbms4Mb/EU32SZwToAyZ5RgVos/ki8n+yr0LWHOGKuakbXTuuYNHLQjhddgg==}
+  adm-zip@0.6.1:
+    resolution: {integrity: sha512-Xwrja8nx9e5o2N1my4DsKCeKpdrnACyr1wtbPxBDgGzKzKyE9kRtBFA8mWldI+RVlD7CBZNWY/wQ2+ydwOR6kQ==}
     engines: {node: '>=14.0'}
 
   agent-base@9.0.0:
@@ -1828,7 +1829,7 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  adm-zip@0.6.0: {}
+  adm-zip@0.6.1: {}
 
   agent-base@9.0.0: {}
 

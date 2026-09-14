@@ -9,6 +9,7 @@ overrides:
   brace-expansion@^1: 1.1.18
   brace-expansion@^5: 5.0.9
   undici: ^7.28.0
+  adm-zip: '>=0.6.1'
 nodeLinker: hoisted
 
 minimumReleaseAge: 1440
