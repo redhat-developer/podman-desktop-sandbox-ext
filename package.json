@@ -86,10 +86,10 @@
     }
   },
   "scripts": {
-    "build": "pnpm typecheck && vite build && node ./scripts/build.cjs",
+    "build": "pnpm typecheck && vite build",
     "watch": "vite build -w",
-    "format:check": "prettier --check \"**/*.ts\" \"scripts/*.cjs\"",
-    "format:fix": "prettier --write \"**/*.ts\" \"scripts/*.cjs\"",
+    "format:check": "prettier --check \"**/*.ts\"",
+    "format:fix": "prettier --write \"**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:e2e:setup": "xvfb-maybe --auto-servernum --server-args='-screen 0 1280x960x24' --",
@@ -107,19 +107,15 @@
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24",
     "@vitest/coverage-v8": "^4.1.8",
-    "byline": "^5.0.0",
-    "copyfiles": "^2.4.1",
     "cross-env": "10.1.0",
     "jsdom": "^30.0.1",
-    "mkdirp": "^3.0.1",
     "prettier": "^3.9.6",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
     "vitest": "^4.1.11",
     "vscode-uri": "^3.2.0",
     "xvfb-maybe": "^0.2.1",
-    "js-yaml": "^5.4.1",
-    "adm-zip": "^0.6.1"
+    "js-yaml": "^5.4.1"
   },
   "extensionDependencies": [
     "redhat.redhat-authentication"
