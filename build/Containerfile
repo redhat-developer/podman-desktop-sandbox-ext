@@ -20,7 +20,7 @@ FROM ghcr.io/redhat-developer/podman-desktop-sandbox-ext-builder:next as builder
 ENV CI=true
 
 COPY --chown=1001:root . .
-RUN CI=true pnpm install && pnpm build
+RUN pnpm install && pnpm build
 
 FROM scratch
 
@@ -29,4 +29,9 @@ LABEL org.opencontainers.image.title="Developer Sandbox Provider" \
         org.opencontainers.image.vendor="Red Hat" \
         io.podman-desktop.api.version=">= 0.14.1"
 
-COPY --from=builder /opt/app-root/extension-source/builtin/redhat-sandbox.cdix /extension
+COPY --from=builder /opt/app-root/extension-source/dist/ /extension/dist
+COPY --from=builder /opt/app-root/extension-source/package.json /extension/
+COPY --from=builder /opt/app-root/extension-source/icon.png /extension/
+COPY --from=builder /opt/app-root/extension-source/sandbox-icon.woff2 /extension/
+COPY --from=builder /opt/app-root/extension-source/LICENSE /extension/
+COPY --from=builder /opt/app-root/extension-source/README.md /extension/
