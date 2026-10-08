@@ -22,5 +22,5 @@ RUN mkdir -p $EXTENSION_SRC
 WORKDIR $EXTENSION_SRC
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .
-RUN npm install --global pnpm@11 && \
+RUN npm install --global pnpm && \
     CI=true pnpm --frozen-lockfile install
