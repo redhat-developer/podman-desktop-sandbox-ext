@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Red Hat, Inc.
+# Copyright (C) 2025 - 2026 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,23 +15,32 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-FROM ghcr.io/redhat-developer/podman-desktop-sandbox-ext-builder:next as builder
+FROM registry.access.redhat.com/ubi10/nodejs-24-minimal:10.2-1791463156 as builder
 
+ENV EXTENSION_SRC=/opt/app-root/src
+RUN mkdir -p $EXTENSION_SRC
+WORKDIR $EXTENSION_SRC
+
+# pnpm runs an implicit dependency check before `run` scripts, which spawns a
+# nested `pnpm install`. That nested call does not inherit a per-command
+# `CI=true`, so inside a container it blocks on an interactive prompt and the
+# build hangs. Setting CI on the environment makes every pnpm invocation
+# non-interactive.
 ENV CI=true
 
-COPY --chown=1001:root . .
-RUN pnpm install && pnpm build
+COPY --chown=1001:1001 . .
+
+RUN npm i -g corepack@0.36.0 && corepack enable
+RUN pnpm install
+RUN pnpm build
+RUN mkdir -p /tmp/extension && \
+    cp -r dist package.json icon.png sandbox-icon.woff2 LICENSE README.md /tmp/extension/
 
 FROM scratch
 
 LABEL org.opencontainers.image.title="Developer Sandbox Provider" \
-        org.opencontainers.image.description="Developer Sandbox provider for Podman Desktop" \
-        org.opencontainers.image.vendor="Red Hat" \
-        io.podman-desktop.api.version=">= 0.14.1"
+      org.opencontainers.image.description="Developer Sandbox provider for Podman Desktop" \
+      org.opencontainers.image.vendor="Red Hat" \
+      io.podman-desktop.api.version=">= 0.14.1"
 
-COPY --from=builder /opt/app-root/extension-source/dist/ /extension/dist
-COPY --from=builder /opt/app-root/extension-source/package.json /extension/
-COPY --from=builder /opt/app-root/extension-source/icon.png /extension/
-COPY --from=builder /opt/app-root/extension-source/sandbox-icon.woff2 /extension/
-COPY --from=builder /opt/app-root/extension-source/LICENSE /extension/
-COPY --from=builder /opt/app-root/extension-source/README.md /extension/
+COPY --from=builder /tmp/extension /extension
