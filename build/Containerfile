@@ -30,8 +30,13 @@ ENV CI=true
 
 COPY --chown=1001:1001 . .
 
-RUN npm i -g corepack@0.36.0 && corepack enable
-RUN pnpm install
+# npm must be used with sha512-(base64) integrity checks enabled in package.json,
+# which apparently triggers generation of a single document lockfile.
+# It is required for the hermetic build downstream until hermeto
+# supports multi-document lockfiles.
+RUN npm i -g pnpm@12.10.1
+
+RUN pnpm install --frozen-lockfile
 RUN pnpm build
 RUN mkdir -p /tmp/extension && \
     cp -r dist package.json icon.png sandbox-icon.woff2 LICENSE README.md /tmp/extension/
