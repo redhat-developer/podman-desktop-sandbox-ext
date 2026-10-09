@@ -2,7 +2,7 @@
   "name": "redhat-sandbox",
   "repository": "https://github.com/redhat-developer/podman-desktop-sandbox-ext",
   "homepage": "https://github.com/redhat-developer/podman-desktop-sandbox-ext#readme",
-  "packageManager": "pnpm@12.10.1+sha512-ukCjfrGjcNYP6oxM8dNkwTvMzvUY6YrSvO6VT1OdONo3RY5YJho/pV4GUjRQ6g//+fSXsTW+QfLBXBZCusrObA==",
+  "packageManager": "pnpm@12.10.1+sha512.ba40a37eb1a370d60fea8c4cf1d364c13bcccef518e98ad2bcee954f539d38da37458e58261a3fa55e06523450ea0ffff9f497b135be41f2c15c1642bacace6c",
   "displayName": "Developer Sandbox",
   "description": "Sign up and provisioning for Developer Sandbox",
   "version": "0.2.0-next",
