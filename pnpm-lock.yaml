@@ -15,7 +15,7 @@ overrides:
   brace-expansion@^1: 1.1.18
   brace-expansion@^5: 5.0.9
   source-map-js@^1: ^1.2.2
-  undici: ^7.30.0
+  undici: ^7.30.1
   http-cache-semantics@^4: ^4.3.0
 
 importers:
@@ -1112,8 +1112,8 @@ packages:
   undici-types@8.3.0:
     resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
 
-  undici@7.30.0:
-    resolution: {integrity: sha512-dkrQXeHSaoamnItlYbmzG0wFYrM0ZwDxCIg0A7aKjTyyhh9svRzCNFEzV+Vm05/yehjCzjDZ31KXfGEjYSztDQ==}
+  undici@7.30.1:
+    resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
     engines: {node: '>=20.18.1'}
 
   universalify@2.0.1:
@@ -1362,7 +1362,7 @@ snapshots:
       socks-proxy-agent: 10.1.0(supports-color@7.2.0)
       stream-buffers: 3.0.3
       tar-fs: 3.1.3
-      undici: 7.30.0
+      undici: 7.30.1
       ws: 8.21.3
     transitivePeerDependencies:
       - bare-abort-controller
@@ -1840,7 +1840,7 @@ snapshots:
       parse5: 8.0.1
       saxes: 6.0.0
       tough-cookie: 6.0.2
-      undici: 7.30.0
+      undici: 7.30.1
       w3c-xmlserializer: 6.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -2172,7 +2172,7 @@ snapshots:
 
   undici-types@8.3.0: {}
 
-  undici@7.30.0: {}
+  undici@7.30.1: {}
 
   universalify@2.0.1: {}
 
