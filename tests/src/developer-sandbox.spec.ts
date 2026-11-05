@@ -33,8 +33,8 @@ const extensionLabel = 'redhat.redhat-sandbox';
 const extensionLabelName = 'redhat-sandbox';
 const extensionResourceLabel = 'redhat.sandbox';
 const extensionProvider = 'Developer Sandbox Provider';
-const activeExtensionStatus = 'ACTIVE';
-const disabledExtensionStatus = 'DISABLED';
+const activeExtensionStatus = 'Installed';
+const disabledExtensionStatus = 'Disabled';
 const activeConnectionStatus = 'RUNNING';
 const skipInstallation = process.env.SKIP_INSTALLATION === 'true';
 
