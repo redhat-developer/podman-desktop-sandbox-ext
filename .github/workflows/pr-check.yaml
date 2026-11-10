@@ -36,7 +36,7 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Execute pnpm
@@ -62,7 +62,7 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Execute pnpm
@@ -85,7 +85,7 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Execute pnpm
@@ -108,7 +108,7 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Execute pnpm
@@ -154,7 +154,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         name: Install nodejs 24
         with:
-          node-version: 24
+          node-version-file: 'podman-desktop-sandbox-ext/.nvmrc'
           cache: 'pnpm'
           cache-dependency-path: |
             ./podman-desktop/pnpm-lock.yaml
