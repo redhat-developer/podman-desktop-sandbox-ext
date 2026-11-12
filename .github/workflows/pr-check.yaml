@@ -160,11 +160,11 @@ jobs:
             ./podman-desktop/pnpm-lock.yaml
             ./podman-desktop-sandbox-ext/pnpm-lock.yaml
 
-      - name: Build Podman Desktop for E2E tests
-        working-directory: ./podman-desktop
-        run: |
-          pnpm install
-          pnpm test:e2e:build
+      - name: Install Podman Desktop
+        id: podman-desktop-install
+        uses: podman-desktop/gh-extensions-actions/.github/actions/podman-desktop-install@e59cd52b942e8dfcc187293c5d8e9f3831c7ac0c # v0.11.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Revert unprivileged user namespace restrictions in Ubuntu 24.04
         run: |
@@ -211,7 +211,8 @@ jobs:
       - name: Run E2E tests
         working-directory: ./podman-desktop-sandbox-ext
         env:
-          PODMAN_DESKTOP_ARGS: ${{ github.workspace }}/podman-desktop
+          DEBUGGING_PORT: 9222
+          PODMAN_DESKTOP_BINARY: ${{ steps.podman-desktop-install.outputs.binary }}
         run: pnpm test:e2e
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
