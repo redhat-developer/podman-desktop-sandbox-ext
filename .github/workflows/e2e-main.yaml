@@ -138,17 +138,12 @@ jobs:
           sudo mkdir -p /etc/chromium/policies/managed
           sudo cp url_allow_list.json /etc/chromium/policies/managed/url_allow_list.json
 
-      - name: Build Podman Desktop for E2E tests Production Mode
-        working-directory: ./podman-desktop
-        if: ${{ env.MODE == 'production' }} 
-        env:
-          ELECTRON_ENABLE_INSPECT: true
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm compile:current --linux dir
-          path=$(realpath ./dist/linux-unpacked/podman-desktop)
-          echo "Podman Desktop built binary: $path"
-          echo "PODMAN_DESKTOP_BINARY_PATH=$path" >> $GITHUB_ENV
+      - name: Install Podman Desktop
+        id: podman-desktop-install
+        if: ${{ env.MODE == 'production' }}
+        uses: podman-desktop/gh-extensions-actions/.github/actions/podman-desktop-install@e59cd52b942e8dfcc187293c5d8e9f3831c7ac0c # v0.11.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Execute pnpm in Developer Sandbox Extension
         working-directory: ${{ env.REPOSITORY }}
@@ -163,7 +158,8 @@ jobs:
         working-directory: ${{ env.REPOSITORY }}
         if: ${{ env.MODE == 'production' }}
         env:
-          PODMAN_DESKTOP_BINARY: ${{ env.PODMAN_DESKTOP_BINARY_PATH }}
+          DEBUGGING_PORT: 9222
+          PODMAN_DESKTOP_BINARY: ${{ steps.podman-desktop-install.outputs.binary }}
           DVLPR_USERNAME: ${{ secrets.DVLPR_USERNAME }}
           DVLPR_PASSWORD: ${{ secrets.DVLPR_PASSWORD }}
           AUTH_E2E_TESTS: true
