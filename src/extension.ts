@@ -50,6 +50,17 @@ type ImageInfo = { engineId: string; name?: string; tag?: string };
 
 export const AuthenticationScopes = ['api.iam.registry_service_accounts', 'api.console'];
 
+/**
+ * Platform expected by Developer Sandbox cluster nodes.
+ */
+export const SandboxTargetArchitecture = 'amd64';
+export const SandboxTargetOs = 'linux';
+export const TargetPlatform = `${SandboxTargetOs}/${SandboxTargetArchitecture}`;
+
+export function unsupportedPlatformMessage(imageName: string, imagePlatform: string): string {
+  return `The image '${imageName}' targets ${imagePlatform}, which does not match the Developer Sandbox cluster supported platform (${TargetPlatform}).`;
+}
+
 export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<void> {
   const qp = Array.from(registeredConnections.values())
     .filter(connection => connection.status === 'started')
@@ -77,6 +88,17 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
     },
     async (progress, token) => {
       try {
+        progress.report({ increment: 15 });
+        const localImageName = `${image.name}${image.tag ? `:${image.tag}` : ``}`;
+        // `pushImage` uploads the platform resolved for the local host, not the one the sandbox
+        // needs, and does not consult the multi-arch index. Inspect the resolved image itself so the
+        // check matches what is actually pushed.
+        const inspected = await extensionApi.containerEngine.getImageInspect(image.engineId, localImageName);
+        if (inspected.Os !== SandboxTargetOs || inspected.Architecture !== SandboxTargetArchitecture) {
+          const imagePlatform = `${inspected.Os}/${inspected.Architecture}`;
+          await extensionApi.window.showErrorMessage(unsupportedPlatformMessage(localImageName, imagePlatform));
+          return;
+        }
         progress.report({ increment: 25 });
         const registryInfo = await getOpenShiftInternalRegistryPublicHost(targetSb);
         progress.report({ increment: 50 });
@@ -84,7 +106,6 @@ export async function pushImageToOpenShiftRegistry(image: ImageInfo): Promise<vo
         const lastIndexOfSlash = imageName.lastIndexOf('/');
         const imageShortName = lastIndexOfSlash !== -1 ? imageName.substring(lastIndexOfSlash + 1) : imageName;
         const imageTagSuffix = image.tag ? `:${image.tag}` : ``;
-        const localImageName = `${image.name}${imageTagSuffix}`;
         const remoteImageName = `${registryInfo.host}/${registryInfo.username}-dev/${imageShortName}${imageTagSuffix}`;
         if (localImageName !== remoteImageName) {
           await extensionApi.containerEngine.tagImage(
