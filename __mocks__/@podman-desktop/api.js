@@ -36,6 +36,8 @@ module.exports = {
     listContainers: vi.fn(),
     tagImage: vi.fn(),
     pushImage: vi.fn(),
+    getImageInspect: vi.fn(),
+    inspectManifest: vi.fn(),
   },
   authentication: {
     getSession: vi.fn(),
@@ -65,6 +67,7 @@ module.exports = {
   window: {
     withProgress: vi.fn(),
     showInformationMessage: vi.fn(),
+    showErrorMessage: vi.fn(),
   },
 
   ProgressLocation: {
