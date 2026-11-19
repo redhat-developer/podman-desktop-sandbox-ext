@@ -22,14 +22,14 @@
 
 module.exports = {
   provider: {
-    createProvider: () => {
+    createProvider: vi.fn(() => {
       return {
         registerKubernetesProviderConnection: () => ({
           dispose: vi.fn(),
         }),
         setKubernetesProviderConnectionFactory: vi.fn(),
-      }
-    }
+      };
+    }),
   },
 
   containerEngine: {

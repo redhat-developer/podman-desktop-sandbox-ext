@@ -99,7 +99,7 @@ test('kubernetes provider connection factory is set during activation', async ()
       dispose: vi.fn(),
     }),
   } as any as podmanDesktopApi.Provider;
-  vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+  vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
   await extension.activate(context);
   expect(providerMock.setKubernetesProviderConnectionFactory).toBeCalled();
 });
@@ -156,8 +156,8 @@ suite('kubernetes provider connection factory', () => {
         dispose: vi.fn(),
       }),
     } as any as podmanDesktopApi.Provider;
-    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
-    vi.spyOn(podmanDesktopApi.authentication, 'getSession').mockResolvedValue({
+    vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
+    vi.mocked(podmanDesktopApi.authentication.getSession).mockResolvedValue({
       id: '1',
       accessToken: 'accessTokenString',
       idToken: 'idTokenString',
@@ -474,7 +474,7 @@ describe('deactivation stops periodic connection updates', () => {
         dispose: vi.fn(),
       }),
     } as any as podmanDesktopApi.Provider;
-    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+    vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
     vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockReturnValue(new KubeConfig());
     return providerMock;
   }
@@ -596,7 +596,7 @@ test('push image to sandbox does not change title after it is finished', async (
       };
     },
   } as any as podmanDesktopApi.Provider;
-  vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+  vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
   const report = vi.fn();
   vi.mocked(podmanDesktopApi.window.withProgress).mockImplementation(
     (
@@ -695,7 +695,7 @@ test('push image to sandbox is blocked when the image is not linux/amd64', async
   } as podmanDesktopApi.ImageInspectInfo);
 
   let registeredConnection: { status: () => any } | undefined;
-  vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue({
+  vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue({
     setKubernetesProviderConnectionFactory: vi.fn(),
     registerKubernetesProviderConnection: (connection: podmanDesktopApi.KubernetesProviderConnection) => {
       registeredConnection = connection;
@@ -807,7 +807,7 @@ test('push image to sandbox blocks an arm64 image even when the tag is backed by
   } as podmanDesktopApi.ImageInspectInfo);
 
   let registeredConnection: { status: () => any } | undefined;
-  vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue({
+  vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue({
     setKubernetesProviderConnectionFactory: vi.fn(),
     registerKubernetesProviderConnection: (connection: podmanDesktopApi.KubernetesProviderConnection) => {
       registeredConnection = connection;
@@ -878,8 +878,8 @@ describe('connection error property', () => {
         };
       },
     } as any as podmanDesktopApi.Provider;
-    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
-    vi.spyOn(podmanDesktopApi.authentication, 'getSession').mockResolvedValue({
+    vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
+    vi.mocked(podmanDesktopApi.authentication.getSession).mockResolvedValue({
       id: '1',
       accessToken: 'accessTokenString',
       idToken: 'idTokenString',
