@@ -99,7 +99,7 @@ test('kubernetes provider connection factory is set during activation', async ()
       dispose: vi.fn(),
     }),
   } as any as podmanDesktopApi.Provider;
-  vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+  vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
   await extension.activate(context);
   expect(providerMock.setKubernetesProviderConnectionFactory).toBeCalled();
 });
@@ -156,8 +156,8 @@ suite('kubernetes provider connection factory', () => {
         dispose: vi.fn(),
       }),
     } as any as podmanDesktopApi.Provider;
-    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
-    vi.spyOn(podmanDesktopApi.authentication, 'getSession').mockResolvedValue({
+    vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
+    vi.mocked(podmanDesktopApi.authentication.getSession).mockResolvedValue({
       id: '1',
       accessToken: 'accessTokenString',
       idToken: 'idTokenString',
@@ -474,7 +474,7 @@ describe('deactivation stops periodic connection updates', () => {
         dispose: vi.fn(),
       }),
     } as any as podmanDesktopApi.Provider;
-    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+    vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
     vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockReturnValue(new KubeConfig());
     return providerMock;
   }
@@ -596,7 +596,7 @@ test('push image to sandbox does not change title after it is finished', async (
       };
     },
   } as any as podmanDesktopApi.Provider;
-  vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
+  vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
   const report = vi.fn();
   vi.mocked(podmanDesktopApi.window.withProgress).mockImplementation(
     (
@@ -616,6 +616,11 @@ test('push image to sandbox does not change title after it is finished', async (
       return Promise.resolve();
     },
   );
+  vi.mocked(podmanDesktopApi.containerEngine.getImageInspect).mockResolvedValue({
+    engineId: 'podman',
+    Os: 'linux',
+    Architecture: 'amd64',
+  } as podmanDesktopApi.ImageInspectInfo);
   let pushImageCallback: ((name: string, data?: string) => void) | undefined;
   vi.mocked(podmanDesktopApi.containerEngine.pushImage).mockImplementation((async (
     _engineId: string,
@@ -645,6 +650,202 @@ test('push image to sandbox does not change title after it is finished', async (
   pushImageCallback?.('end');
 
   expect(report).not.toHaveBeenCalledWith(expect.objectContaining({ message: 'data-chunk-1' }));
+});
+
+test('push image to sandbox is blocked when the image is not linux/amd64', async () => {
+  extension.deactivate();
+  vi.mocked(got).mockImplementation(
+    vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes('users')) {
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ kind: 'User', metadata: { name: 'system:serviceaccount:username-dev:pipeline' } }),
+        };
+      } else if (url.includes('imagestreams')) {
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ items: [{ status: { publicDockerImageRepository: 'registry-host' } }] }),
+        };
+      }
+    }),
+  );
+  vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockImplementation((_file: string) => {
+    const config = new KubeConfig();
+    config.loadFromOptions({
+      contexts: [
+        {
+          cluster: 'sandbox-cluster-archcheck',
+          name: 'arch-check-context',
+          user: 'sandbox-user-archcheck',
+          namespace: 'username-dev',
+        },
+      ],
+      clusters: [
+        { name: 'sandbox-cluster-archcheck', server: 'https://region.openshiftapps.com:6443', skipTLSVerify: false },
+      ],
+      users: [{ name: 'sandbox-user-archcheck', token: 'sha256~token' }],
+    });
+    return config;
+  });
+
+  vi.mocked(podmanDesktopApi.containerEngine.getImageInspect).mockResolvedValue({
+    engineId: 'podman',
+    Os: 'linux',
+    Architecture: 'arm64',
+  } as podmanDesktopApi.ImageInspectInfo);
+
+  let registeredConnection: { status: () => any } | undefined;
+  vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue({
+    setKubernetesProviderConnectionFactory: vi.fn(),
+    registerKubernetesProviderConnection: (connection: podmanDesktopApi.KubernetesProviderConnection) => {
+      registeredConnection = connection;
+      return { dispose: vi.fn() };
+    },
+  } as any as podmanDesktopApi.Provider);
+  vi.mocked(podmanDesktopApi.window.withProgress).mockImplementation(
+    (
+      _options: podmanDesktopApi.ProgressOptions,
+      task: (
+        progress: podmanDesktopApi.Progress<{ message?: string; increment?: number }>,
+        token: podmanDesktopApi.CancellationToken,
+      ) => Promise<unknown>,
+    ): Promise<void> => {
+      void task({ report: vi.fn() }, {} as podmanDesktopApi.CancellationToken);
+      return Promise.resolve();
+    },
+  );
+
+  await extension.activate(context);
+
+  await vi.waitFor(async () => {
+    expect(registeredConnection?.status()).toEqual('started');
+  }, 3000);
+
+  const pushImageMock = vi.mocked(podmanDesktopApi.containerEngine.pushImage);
+  const tagImageMock = vi.mocked(podmanDesktopApi.containerEngine.tagImage);
+  const errorMessageMock = vi.mocked(podmanDesktopApi.window.showErrorMessage);
+  const getImageInspectMock = vi.mocked(podmanDesktopApi.containerEngine.getImageInspect);
+
+  await extension.pushImageToOpenShiftRegistry({
+    engineId: 'podman',
+    name: 'docker.io/library/httpd',
+    tag: '2.4',
+  });
+
+  expect(getImageInspectMock).toHaveBeenCalledWith('podman', 'docker.io/library/httpd:2.4');
+  expect(errorMessageMock).toHaveBeenCalledTimes(1);
+  const message = errorMessageMock.mock.calls[0][0] as string;
+  expect(message).toBe(extension.unsupportedPlatformMessage('docker.io/library/httpd:2.4', 'linux/arm64'));
+  expect(pushImageMock).not.toHaveBeenCalled();
+  expect(tagImageMock).not.toHaveBeenCalled();
+});
+
+test('push image to sandbox blocks an arm64 image even when the tag is backed by a multi-arch index', async () => {
+  // docker.io/library/httpd:latest is a multi-arch index, but Podman resolves and pushes the
+  // host platform (arm64 on Apple Silicon). The check must use the resolved image, not the index.
+  extension.deactivate();
+  vi.mocked(got).mockImplementation(
+    vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes('users')) {
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ kind: 'User', metadata: { name: 'system:serviceaccount:username-dev:pipeline' } }),
+        };
+      } else if (url.includes('imagestreams')) {
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ items: [{ status: { publicDockerImageRepository: 'registry-host' } }] }),
+        };
+      }
+    }),
+  );
+  vi.spyOn(kubeconfig, 'createOrLoadFromFile').mockImplementation((_file: string) => {
+    const config = new KubeConfig();
+    config.loadFromOptions({
+      contexts: [
+        {
+          cluster: 'sandbox-cluster-httpd',
+          name: 'httpd-context',
+          user: 'sandbox-user-httpd',
+          namespace: 'username-dev',
+        },
+      ],
+      clusters: [
+        { name: 'sandbox-cluster-httpd', server: 'https://region.openshiftapps.com:6443', skipTLSVerify: false },
+      ],
+      users: [{ name: 'sandbox-user-httpd', token: 'sha256~token' }],
+    });
+    return config;
+  });
+
+  // The index advertises amd64 (so an index-based check would wrongly pass) while the resolved
+  // image that `pushImage` would upload is arm64.
+  vi.mocked(podmanDesktopApi.containerEngine.inspectManifest).mockResolvedValue({
+    engineId: 'podman',
+    engineName: 'podman',
+    mediaType: 'application/vnd.oci.image.index.v1+json',
+    schemaVersion: 2,
+    manifests: [
+      {
+        digest: 'sha256:amd64',
+        mediaType: 'application/vnd.oci.image.manifest.v1+json',
+        size: 1,
+        platform: { os: 'linux', architecture: 'amd64' },
+      },
+      {
+        digest: 'sha256:arm64',
+        mediaType: 'application/vnd.oci.image.manifest.v1+json',
+        size: 1,
+        platform: { os: 'linux', architecture: 'arm64', variant: 'v8' },
+      },
+    ],
+  });
+  vi.mocked(podmanDesktopApi.containerEngine.getImageInspect).mockResolvedValue({
+    engineId: 'podman',
+    Os: 'linux',
+    Architecture: 'arm64',
+  } as podmanDesktopApi.ImageInspectInfo);
+
+  let registeredConnection: { status: () => any } | undefined;
+  vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue({
+    setKubernetesProviderConnectionFactory: vi.fn(),
+    registerKubernetesProviderConnection: (connection: podmanDesktopApi.KubernetesProviderConnection) => {
+      registeredConnection = connection;
+      return { dispose: vi.fn() };
+    },
+  } as any as podmanDesktopApi.Provider);
+  vi.mocked(podmanDesktopApi.window.withProgress).mockImplementation(
+    (
+      _options: podmanDesktopApi.ProgressOptions,
+      task: (
+        progress: podmanDesktopApi.Progress<{ message?: string; increment?: number }>,
+        token: podmanDesktopApi.CancellationToken,
+      ) => Promise<unknown>,
+    ): Promise<void> => {
+      void task({ report: vi.fn() }, {} as podmanDesktopApi.CancellationToken);
+      return Promise.resolve();
+    },
+  );
+
+  await extension.activate(context);
+  await vi.waitFor(async () => {
+    expect(registeredConnection?.status()).toEqual('started');
+  }, 3000);
+
+  const pushImageMock = vi.mocked(podmanDesktopApi.containerEngine.pushImage);
+  const errorMessageMock = vi.mocked(podmanDesktopApi.window.showErrorMessage);
+
+  await extension.pushImageToOpenShiftRegistry({
+    engineId: 'podman',
+    name: 'docker.io/library/httpd',
+    tag: 'latest',
+  });
+
+  expect(errorMessageMock).toHaveBeenCalledTimes(1);
+  expect(errorMessageMock.mock.calls[0][0]).toBe(
+    extension.unsupportedPlatformMessage('docker.io/library/httpd:latest', 'linux/arm64'),
+  );
+  expect(pushImageMock).not.toHaveBeenCalled();
 });
 
 describe('connection error property', () => {
@@ -677,8 +878,8 @@ describe('connection error property', () => {
         };
       },
     } as any as podmanDesktopApi.Provider;
-    vi.spyOn(podmanDesktopApi.provider, 'createProvider').mockReturnValue(providerMock);
-    vi.spyOn(podmanDesktopApi.authentication, 'getSession').mockResolvedValue({
+    vi.mocked(podmanDesktopApi.provider.createProvider).mockReturnValue(providerMock);
+    vi.mocked(podmanDesktopApi.authentication.getSession).mockResolvedValue({
       id: '1',
       accessToken: 'accessTokenString',
       idToken: 'idTokenString',
